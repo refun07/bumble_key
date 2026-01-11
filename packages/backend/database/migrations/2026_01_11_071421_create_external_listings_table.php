@@ -1,0 +1,33 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration {
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        Schema::create('external_listings', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('integration_id')->constrained()->onDelete('cascade');
+            $table->string('external_id');
+            $table->foreignId('property_id')->nullable()->constrained()->onDelete('set null');
+            $table->foreignId('key_id')->nullable()->constrained()->onDelete('set null');
+            $table->string('name');
+            $table->string('address')->nullable();
+            $table->json('raw_data')->nullable();
+            $table->timestamps();
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::dropIfExists('external_listings');
+    }
+};

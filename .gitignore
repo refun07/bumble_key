@@ -1,0 +1,50 @@
+# Dependencies
+node_modules/
+vendor/
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Build outputs
+dist/
+build/
+*.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Laravel
+packages/backend/storage/*.key
+packages/backend/storage/framework/cache/*
+packages/backend/storage/framework/sessions/*
+packages/backend/storage/framework/testing/*
+packages/backend/storage/framework/views/*
+packages/backend/storage/logs/*
+packages/backend/bootstrap/cache/*
+packages/backend/public/storage
+packages/backend/public/hot
+
+# React Native
+packages/mobile/android/app/build/
+packages/mobile/ios/Pods/
+packages/mobile/ios/build/
+packages/mobile/.expo/
+
+# Testing
+coverage/
+.nyc_output/
+
+# Misc
+*.pem
+*.p12
+*.mobileprovision

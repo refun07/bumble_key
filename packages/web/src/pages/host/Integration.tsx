@@ -1,0 +1,297 @@
+import { useEffect, useState } from 'react';
+import { PuzzlePieceIcon, CheckCircleIcon, ArrowPathIcon, Cog6ToothIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import Button from '../../components/common/Button';
+import api from '../../services/api';
+import { useToast } from '../../store/toast';
+import { Dialog, Transition } from '@headlessui/react';
+import { Fragment } from 'react';
+
+interface IntegrationPlatform {
+    id: string;
+    name: string;
+    description: string;
+    logo: string;
+    status: 'connected' | 'not_connected' | 'syncing';
+    lastSync?: string;
+}
+
+interface ExternalListing {
+    id: number;
+    external_id: string;
+    name: string;
+    address: string;
+    key_id: number | null;
+}
+
+const Integration = () => {
+    const { showToast } = useToast();
+    const [platforms, setPlatforms] = useState<IntegrationPlatform[]>([
+        {
+            id: 'airbnb',
+            name: 'Airbnb',
+            description: 'Sync your Airbnb bookings and automate key collection codes for your guests.',
+            logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/69/Airbnb_Logo_Belo.svg/2560px-Airbnb_Logo_Belo.svg.png',
+            status: 'not_connected'
+        },
+        {
+            id: 'booking',
+            name: 'Booking.com',
+            description: 'Connect your Booking.com listings to streamline guest check-ins and key management.',
+            logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/be/Booking.com_logo.svg/2560px-Booking.com_logo.svg.png',
+            status: 'not_connected'
+        },
+        {
+            id: 'vrbo',
+            name: 'VRBO',
+            description: 'Integrate with VRBO to provide a seamless key exchange experience for your vacation rental guests.',
+            logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/3d/Vrbo_logo.svg/2560px-Vrbo_logo.svg.png',
+            status: 'not_connected'
+        }
+    ]);
+
+    const [isSyncing, setIsSyncing] = useState(false);
+    const [isListingModalOpen, setIsListingModalOpen] = useState(false);
+    const [listings, setListings] = useState<ExternalListing[]>([]);
+    const [keys, setKeys] = useState<any[]>([]);
+    // const [isLoadingListings, setIsLoadingListings] = useState(false);
+
+    useEffect(() => {
+        fetchIntegrationStatus();
+        fetchKeys();
+    }, []);
+
+    const fetchIntegrationStatus = async () => {
+        try {
+            const response = await api.get('/hosts/airbnb/integration');
+            const integration = response.data.data;
+            if (integration) {
+                setPlatforms(prev => prev.map(p =>
+                    p.id === 'airbnb'
+                        ? { ...p, status: 'connected', lastSync: integration.updated_at }
+                        : p
+                ));
+                setListings(integration.external_listings || []);
+            }
+        } catch (error) {
+            console.error('Failed to fetch integration status', error);
+        }
+    };
+
+    const fetchKeys = async () => {
+        try {
+            const response = await api.get('/hosts/keys');
+            setKeys(response.data.data);
+        } catch (error) {
+            console.error('Failed to fetch keys', error);
+        }
+    };
+
+    const handleConnect = async (platformId: string) => {
+        if (platformId !== 'airbnb') return;
+
+        try {
+            const response = await api.get('/hosts/airbnb/connect');
+            // Mocking the redirect and callback for demo
+            console.log('Redirecting to:', response.data.auth_url);
+
+            // In a real app, window.location.href = response.data.auth_url;
+            // For demo, we just call the callback directly
+            await api.get('/hosts/airbnb/callback');
+            fetchIntegrationStatus();
+        } catch (error) {
+            console.error('Failed to connect', error);
+        }
+    };
+
+    const handleSync = async () => {
+        setIsSyncing(true);
+        try {
+            await api.get('/hosts/airbnb/sync-listings');
+            await api.get('/hosts/airbnb/sync-bookings');
+            fetchIntegrationStatus();
+        } catch (error) {
+            console.error('Failed to sync', error);
+        } finally {
+            setIsSyncing(false);
+        }
+    };
+
+    const handleMapListing = async (listingId: number, keyId: string) => {
+        try {
+            await api.post(`/hosts/airbnb/listings/${listingId}/map`, { key_id: keyId });
+            showToast('Listing mapped successfully', 'success');
+            fetchIntegrationStatus();
+        } catch (error) {
+            console.error('Failed to map listing', error);
+            showToast('Failed to map listing', 'error');
+        }
+    };
+
+    return (
+        <div className="space-y-8">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                    <h2 className="text-2xl font-bold text-gray-900">Integrations</h2>
+                    <p className="text-gray-500">Connect your favorite platforms to automate your key management workflow.</p>
+                </div>
+                <Button
+                    variant="outline"
+                    className="px-6 py-3 flex items-center gap-2"
+                    onClick={handleSync}
+                    isLoading={isSyncing}
+                >
+                    <ArrowPathIcon className={`h-5 w-5 text-gray-400 ${isSyncing ? 'animate-spin' : ''}`} />
+                    Sync All
+                </Button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {platforms.map((platform) => (
+                    <div key={platform.id} className="bg-white rounded-3xl border border-gray-100 shadow-sm p-8 flex flex-col h-full hover:shadow-md transition-shadow">
+                        <div className="h-12 mb-6 flex items-center justify-between">
+                            <img src={platform.logo} alt={platform.name} className="h-8 object-contain" />
+                            {platform.status === 'connected' && (
+                                <div className="flex items-center gap-1.5 px-3 py-1 bg-green-50 rounded-full border border-green-100">
+                                    <CheckCircleIcon className="h-4 w-4 text-green-600" />
+                                    <span className="text-[10px] font-bold text-green-600 uppercase tracking-widest">Connected</span>
+                                </div>
+                            )}
+                        </div>
+
+                        <h3 className="text-lg font-bold text-gray-900 mb-2">{platform.name}</h3>
+                        <p className="text-sm text-gray-500 leading-relaxed mb-8 flex-1">
+                            {platform.description}
+                        </p>
+
+                        <div className="space-y-4">
+                            {platform.status === 'connected' ? (
+                                <>
+                                    <div className="flex items-center justify-between text-xs text-gray-400 font-medium">
+                                        <span>Last synced:</span>
+                                        <span>{platform.lastSync ? new Date(platform.lastSync).toLocaleString() : 'Never'}</span>
+                                    </div>
+                                    <div className="flex gap-2">
+                                        <Button
+                                            variant="outline"
+                                            className="flex-1 py-2.5 text-xs flex items-center justify-center gap-2"
+                                            onClick={() => setIsListingModalOpen(true)}
+                                        >
+                                            <Cog6ToothIcon className="h-4 w-4" />
+                                            Manage
+                                        </Button>
+                                        <Button variant="outline" className="flex-1 py-2.5 text-xs border-red-100 text-red-500 hover:bg-red-50">
+                                            Disconnect
+                                        </Button>
+                                    </div>
+                                </>
+                            ) : (
+                                <Button
+                                    variant="bumble"
+                                    className="w-full py-3"
+                                    onClick={() => handleConnect(platform.id)}
+                                >
+                                    Connect Platform
+                                </Button>
+                            )}
+                        </div>
+                    </div>
+                ))}
+
+                {/* Custom Integration Card */}
+                <div className="bg-gray-50/50 rounded-3xl border-2 border-dashed border-gray-200 p-8 flex flex-col items-center justify-center text-center gap-4">
+                    <div className="p-4 bg-white rounded-2xl shadow-sm">
+                        <PuzzlePieceIcon className="h-8 w-8 text-gray-400" />
+                    </div>
+                    <div>
+                        <h3 className="text-lg font-bold text-gray-900 mb-1">Request Integration</h3>
+                        <p className="text-sm text-gray-500">Don't see your platform? Let us know and we'll work on it.</p>
+                    </div>
+                    <Button variant="outline" className="mt-2 px-6 py-2 text-xs">
+                        Send Request
+                    </Button>
+                </div>
+            </div>
+
+            {/* Manage Listings Modal */}
+            <Transition show={isListingModalOpen} as={Fragment}>
+                <Dialog as="div" className="relative z-50" onClose={() => setIsListingModalOpen(false)}>
+                    <Transition.Child
+                        as={Fragment}
+                        enter="ease-out duration-300"
+                        enterFrom="opacity-0"
+                        enterTo="opacity-100"
+                        leave="ease-in duration-200"
+                        leaveFrom="opacity-100"
+                        leaveTo="opacity-0"
+                    >
+                        <div className="fixed inset-0 bg-black/25 backdrop-blur-sm" />
+                    </Transition.Child>
+
+                    <div className="fixed inset-0 overflow-y-auto">
+                        <div className="flex min-h-full items-center justify-center p-4 text-center">
+                            <Transition.Child
+                                as={Fragment}
+                                enter="ease-out duration-300"
+                                enterFrom="opacity-0 scale-95"
+                                enterTo="opacity-100 scale-100"
+                                leave="ease-in duration-200"
+                                leaveFrom="opacity-100 scale-100"
+                                leaveTo="opacity-0 scale-95"
+                            >
+                                <Dialog.Panel className="w-full max-w-2xl transform overflow-hidden rounded-[32px] bg-white p-10 text-left align-middle shadow-xl transition-all">
+                                    <div className="flex items-center justify-between mb-8">
+                                        <Dialog.Title as="h3" className="text-2xl font-bold text-gray-900">
+                                            Manage Airbnb Listings
+                                        </Dialog.Title>
+                                        <button onClick={() => setIsListingModalOpen(false)} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+                                            <XMarkIcon className="h-6 w-6 text-gray-400" />
+                                        </button>
+                                    </div>
+
+                                    <div className="space-y-6">
+                                        {listings.length === 0 ? (
+                                            <div className="text-center py-12 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200">
+                                                <p className="text-gray-500">No listings synced yet. Click "Sync All" to fetch your listings.</p>
+                                            </div>
+                                        ) : (
+                                            <div className="divide-y divide-gray-100">
+                                                {listings.map((listing) => (
+                                                    <div key={listing.id} className="py-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                                        <div className="flex-1 min-w-0">
+                                                            <h4 className="text-sm font-bold text-gray-900 truncate">{listing.name}</h4>
+                                                            <p className="text-xs text-gray-500 mt-1 truncate">{listing.address}</p>
+                                                        </div>
+                                                        <div className="w-full md:w-64">
+                                                            <select
+                                                                className="w-full px-4 py-2 text-xs font-bold border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-bumble-yellow/20 transition-all"
+                                                                value={listing.key_id || ''}
+                                                                onChange={(e) => handleMapListing(listing.id, e.target.value)}
+                                                            >
+                                                                <option value="">Map to BumbleKey...</option>
+                                                                {keys.map(key => (
+                                                                    <option key={key.id} value={key.id}>{key.label}</option>
+                                                                ))}
+                                                            </select>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <div className="mt-10 flex justify-end">
+                                        <Button variant="bumble" className="px-8 py-3" onClick={() => setIsListingModalOpen(false)}>
+                                            Done
+                                        </Button>
+                                    </div>
+                                </Dialog.Panel>
+                            </Transition.Child>
+                        </div>
+                    </div>
+                </Dialog>
+            </Transition>
+        </div>
+    );
+};
+
+export default Integration;
