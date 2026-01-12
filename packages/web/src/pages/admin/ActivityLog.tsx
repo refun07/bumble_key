@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useTheme } from '../../store/theme';
 import api from '../../services/api';
 import { TableShimmer } from '../../components/common/Shimmer';
 import {
@@ -83,6 +84,7 @@ const MOCK_LOGS: AuditLog[] = [
 ];
 
 const ActivityLog = () => {
+    const { isDarkMode } = useTheme();
     const [logs, setLogs] = useState<AuditLog[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [page, setPage] = useState(1);
@@ -113,21 +115,25 @@ const ActivityLog = () => {
 
     const getActionStyle = (action: string) => {
         if (action.toLowerCase().includes('assigned')) {
-            return 'bg-yellow-50 text-yellow-700 border border-yellow-100';
+            return isDarkMode
+                ? 'bg-yellow-500/10 text-yellow-500 border border-yellow-500/20'
+                : 'bg-yellow-50 text-yellow-700 border border-yellow-100';
         }
-        return 'bg-gray-100 text-gray-700 border border-gray-200';
+        return isDarkMode
+            ? 'bg-zinc-800 text-zinc-400 border border-zinc-700'
+            : 'bg-gray-100 text-gray-700 border border-gray-200';
     };
 
     return (
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h2 className="text-3xl font-bold text-gray-900 tracking-tight">Activity Logs</h2>
-                    <p className="text-gray-500 font-medium mt-1">Monitor all user actions and system events in real-time.</p>
+                    <h2 className="text-3xl font-bold text-primary tracking-tight">Activity Logs</h2>
+                    <p className="text-secondary font-medium mt-1">Monitor all user actions and system events in real-time.</p>
                 </div>
             </div>
 
-            <div className="bg-white rounded-[40px] border border-gray-100 shadow-sm overflow-hidden">
+            <div className="bg-primary rounded-[40px] border border-default shadow-sm overflow-hidden">
                 <div className="overflow-x-auto">
                     {isLoading ? (
                         <div className="p-10">
@@ -135,17 +141,17 @@ const ActivityLog = () => {
                         </div>
                     ) : (
                         <table className="w-full text-left border-collapse">
-                            <tbody className="divide-y divide-gray-50">
+                            <tbody className={`divide-y ${isDarkMode ? 'divide-zinc-800' : 'divide-gray-50'}`}>
                                 {logs.map((log) => (
-                                    <tr key={log.id} className="hover:bg-gray-50/50 transition-colors group">
+                                    <tr key={log.id} className={`transition-colors group ${isDarkMode ? 'hover:bg-zinc-800/50' : 'hover:bg-gray-50/50'}`}>
                                         <td className="px-10 py-6 w-[30%]">
                                             <div className="flex items-center gap-4">
-                                                <div className="w-12 h-12 rounded-full bg-yellow-50 border border-yellow-100 flex items-center justify-center text-yellow-600 shrink-0">
+                                                <div className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 border ${isDarkMode ? 'bg-yellow-500/10 border-yellow-500/20 text-yellow-500' : 'bg-yellow-50 border-yellow-100 text-yellow-600'}`}>
                                                     <UserIcon className="h-6 w-6" />
                                                 </div>
                                                 <div className="min-w-0">
-                                                    <p className="text-sm font-bold text-gray-900 truncate">{log.performer?.name || 'System'}</p>
-                                                    <p className="text-xs text-gray-400 truncate">{log.performer?.email || 'N/A'}</p>
+                                                    <p className="text-sm font-bold text-primary truncate">{log.performer?.name || 'System'}</p>
+                                                    <p className="text-xs text-secondary truncate">{log.performer?.email || 'N/A'}</p>
                                                 </div>
                                             </div>
                                         </td>
@@ -156,23 +162,23 @@ const ActivityLog = () => {
                                         </td>
                                         <td className="px-6 py-6 w-[25%]">
                                             <div className="space-y-1">
-                                                <div className="flex items-center gap-2 text-xs font-medium text-gray-500">
-                                                    <GlobeAltIcon className="h-3.5 w-3.5 text-gray-400" />
+                                                <div className="flex items-center gap-2 text-xs font-medium text-secondary">
+                                                    <GlobeAltIcon className={`h-3.5 w-3.5 ${isDarkMode ? 'text-zinc-500' : 'text-gray-400'}`} />
                                                     {log.ip_address}
                                                 </div>
-                                                <div className="text-[10px] text-gray-400 truncate max-w-[200px] pl-5.5">
+                                                <div className={`text-[10px] truncate max-w-[200px] pl-5.5 ${isDarkMode ? 'text-zinc-500' : 'text-gray-400'}`}>
                                                     {log.user_agent.split('(')[0]}...
                                                 </div>
                                             </div>
                                         </td>
                                         <td className="px-10 py-6 w-[15%] text-right">
-                                            <div className="flex items-center justify-end gap-2 text-gray-400">
+                                            <div className={`flex items-center justify-end gap-2 ${isDarkMode ? 'text-zinc-500' : 'text-gray-400'}`}>
                                                 <ClockIcon className="h-4 w-4" />
                                                 <div className="text-right">
-                                                    <p className="text-xs font-bold text-gray-500">
+                                                    <p className="text-xs font-bold text-secondary">
                                                         {new Date(log.created_at).toLocaleDateString()}
                                                     </p>
-                                                    <p className="text-[10px] font-medium text-gray-400">
+                                                    <p className={`text-[10px] font-medium ${isDarkMode ? 'text-zinc-500' : 'text-gray-400'}`}>
                                                         {new Date(log.created_at).toLocaleTimeString()}
                                                     </p>
                                                 </div>
@@ -187,21 +193,21 @@ const ActivityLog = () => {
 
                 {/* Pagination */}
                 {!isLoading && totalPages > 1 && (
-                    <div className="px-10 py-6 border-t border-gray-50 flex items-center justify-between bg-gray-50/30">
+                    <div className={`px-10 py-6 border-t flex items-center justify-between ${isDarkMode ? 'bg-zinc-800/30 border-zinc-800' : 'bg-gray-50/30 border-gray-50'}`}>
                         <button
                             onClick={() => setPage(p => Math.max(1, p - 1))}
                             disabled={page === 1}
-                            className="px-5 py-2.5 text-xs font-bold text-gray-600 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 disabled:opacity-50 disabled:hover:bg-white transition-all shadow-sm"
+                            className={`px-5 py-2.5 text-xs font-bold rounded-xl transition-all shadow-sm disabled:opacity-50 ${isDarkMode ? 'bg-zinc-800 text-zinc-300 border-zinc-700 hover:bg-zinc-700 disabled:hover:bg-zinc-800' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50 disabled:hover:bg-white'}`}
                         >
                             Previous
                         </button>
-                        <span className="text-xs font-bold text-gray-400">
+                        <span className="text-xs font-bold text-secondary">
                             Page {page} of {totalPages}
                         </span>
                         <button
                             onClick={() => setPage(p => Math.min(totalPages, p + 1))}
                             disabled={page === totalPages}
-                            className="px-5 py-2.5 text-xs font-bold text-gray-600 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 disabled:opacity-50 disabled:hover:bg-white transition-all shadow-sm"
+                            className={`px-5 py-2.5 text-xs font-bold rounded-xl transition-all shadow-sm disabled:opacity-50 ${isDarkMode ? 'bg-zinc-800 text-zinc-300 border-zinc-700 hover:bg-zinc-700 disabled:hover:bg-zinc-800' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50 disabled:hover:bg-white'}`}
                         >
                             Next
                         </button>

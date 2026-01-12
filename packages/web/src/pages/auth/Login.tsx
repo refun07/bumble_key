@@ -84,7 +84,7 @@ const Login = () => {
                     <div>
                         <Button
                             type="submit"
-                            variant="bumble"
+                            variant="primary"
                             className="w-full py-3"
                             isLoading={isLoading}
                         >
@@ -112,7 +112,7 @@ const Login = () => {
                         </div>
 
                         <Link to="/host/signup" className="block">
-                            <Button variant="outline" className="w-full py-3 border-gray-300 text-gray-700 hover:bg-white hover:border-bumble-yellow hover:text-gray-900">
+                            <Button variant="outline" className="w-full py-3">
                                 Sign up as a Host
                             </Button>
                         </Link>

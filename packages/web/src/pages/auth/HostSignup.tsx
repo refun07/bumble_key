@@ -106,7 +106,7 @@ const HostSignup = () => {
                     <div className="pt-2">
                         <Button
                             type="submit"
-                            variant="bumble"
+                            variant="primary"
                             className="w-full py-4 text-lg"
                             isLoading={isLoading}
                         >
@@ -123,16 +123,16 @@ const HostSignup = () => {
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-3 gap-4">
-                        <button type="button" className="flex items-center justify-center py-3.5 px-4 border border-gray-900 rounded-lg hover:bg-gray-50 transition-all text-[10px] font-bold text-gray-900 uppercase tracking-wider">
-                            Singup with Google
-                        </button>
-                        <button type="button" className="flex items-center justify-center py-3.5 px-4 border border-gray-900 rounded-lg hover:bg-gray-50 transition-all text-[10px] font-bold text-gray-900 uppercase tracking-wider">
-                            Singup with AirBNB
-                        </button>
-                        <button type="button" className="flex items-center justify-center py-3.5 px-4 border border-gray-900 rounded-lg hover:bg-gray-50 transition-all text-[10px] font-bold text-gray-900 uppercase tracking-wider">
-                            Singup with AppleID
-                        </button>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <Button type="button" variant="outline" className="py-3.5 px-4 text-[10px] uppercase tracking-wider">
+                            Signup with Google
+                        </Button>
+                        <Button type="button" variant="outline" className="py-3.5 px-4 text-[10px] uppercase tracking-wider">
+                            Signup with AirBNB
+                        </Button>
+                        <Button type="button" variant="outline" className="py-3.5 px-4 text-[10px] uppercase tracking-wider">
+                            Signup with AppleID
+                        </Button>
                     </div>
 
                     <div className="text-center mt-8">

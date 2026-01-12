@@ -26,6 +26,7 @@ import KeyRegistration from './pages/host/KeyRegistration';
 import HostKeyDetailsHost from './pages/host/HostKeyDetails';
 import CollectionCodeView from './pages/host/CollectionCodeView';
 import GuestPickupView from './pages/guest/GuestPickupView';
+import ViewCodes from './pages/host/ViewCodes';
 import HostSignup from './pages/auth/HostSignup';
 import BumbleHiveMap from './pages/host/BumbleHiveMap';
 import SubscriptionPlans from './pages/host/SubscriptionPlans';
@@ -149,6 +150,7 @@ function App() {
           <Route path="keys/new" element={<KeyRegistration />} />
           <Route path="keys/:id" element={<HostKeyDetailsHost />} />
           <Route path="keys/:id/collection" element={<CollectionCodeView />} />
+          <Route path="keys/:id/codes" element={<ViewCodes />} />
           <Route path="map" element={<BumbleHiveMap />} />
           <Route path="plans" element={<SubscriptionPlans />} />
           <Route path="integration" element={<Integration />} />

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useTheme } from '../../store/theme';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../../services/api';
 import { useToast } from '../../store/toast';
@@ -6,6 +7,7 @@ import Button from '../../components/common/Button';
 
 
 const CollectionCodeView = () => {
+    const { isDarkMode } = useTheme();
     const { showToast } = useToast();
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
@@ -76,26 +78,26 @@ const CollectionCodeView = () => {
     }
 
     return (
-        <div className="max-w-2xl mx-auto py-12 px-4">
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div className={`min-h-screen flex items-center justify-center py-12 px-4 ${isDarkMode ? 'bg-zinc-950' : 'bg-gray-50'}`}>
+            <div className={`max-w-2xl w-full rounded-xl shadow-sm border overflow-hidden ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-gray-100'}`}>
                 <div className="p-12 space-y-12">
                     <div className="text-left">
-                        <h2 className="text-xl font-bold text-gray-900">
+                        <h2 className="text-xl font-bold text-primary">
                             Collection code and link Generated
                         </h2>
                     </div>
 
                     <div className="space-y-6">
                         <div>
-                            <h3 className="text-sm font-bold text-gray-900 mb-2">Pick Up Instructions</h3>
-                            <p className="text-gray-500 text-xs leading-relaxed max-w-md">
+                            <h3 className="text-sm font-bold text-primary mb-2">Pick Up Instructions</h3>
+                            <p className="text-secondary text-xs leading-relaxed max-w-md">
                                 Share the following link with your guest. It contains all details regarding the collection code and location map
                             </p>
                         </div>
 
                         <div className="flex gap-4">
                             <Button
-                                variant="bumble"
+                                variant="primary"
                                 className="flex-1 py-3 text-sm"
                                 onClick={() => window.open(magicLink || '', '_blank')}
                                 disabled={!magicLink}
@@ -103,7 +105,7 @@ const CollectionCodeView = () => {
                                 Open Link
                             </Button>
                             <Button
-                                variant="bumble"
+                                variant="primary"
                                 className="flex-1 py-3 text-sm"
                                 onClick={copyToClipboard}
                                 disabled={!magicLink}
@@ -113,28 +115,28 @@ const CollectionCodeView = () => {
                         </div>
                     </div>
 
-                    <div className="pt-12 border-t border-gray-100 space-y-6">
+                    <div className={`pt-12 border-t space-y-6 ${isDarkMode ? 'border-zinc-800' : 'border-gray-100'}`}>
                         <div>
-                            <h3 className="text-sm font-bold text-gray-900 mb-2">Guest Information</h3>
-                            <p className="text-gray-500 text-xs leading-relaxed max-w-md">
+                            <h3 className="text-sm font-bold text-primary mb-2">Guest Information</h3>
+                            <p className="text-secondary text-xs leading-relaxed max-w-md">
                                 If you think it will be easier for the partner to recognize the guest, you can put his name in the following section.
                             </p>
                         </div>
 
                         <div className="space-y-3">
-                            <label className="text-xs font-bold text-gray-900">Guest Name</label>
+                            <label className="text-xs font-bold text-primary">Guest Name</label>
                             <div className="flex gap-3">
                                 <div className="flex-1">
                                     <input
                                         type="text"
                                         placeholder="Write the name"
-                                        className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-bumble-yellow/20 transition-all text-sm"
+                                        className={`w-full px-4 py-2.5 border rounded-xl focus:outline-none focus:ring-2 focus:ring-bumble-yellow transition-all text-sm ${isDarkMode ? 'bg-zinc-800 border-zinc-700 text-white placeholder-zinc-500' : 'bg-gray-50/50 border-gray-200 text-gray-900 placeholder-gray-400'}`}
                                         value={guestName}
                                         onChange={(e) => setGuestName(e.target.value)}
                                     />
                                 </div>
                                 <Button
-                                    variant="bumble"
+                                    variant="primary"
                                     className="px-8 py-2.5 text-sm"
                                     onClick={handleSaveName}
                                     isLoading={isSavingName}
@@ -145,9 +147,9 @@ const CollectionCodeView = () => {
                         </div>
                     </div>
 
-                    <div className="pt-6 border-t border-gray-100">
+                    <div className={`pt-6 border-t ${isDarkMode ? 'border-zinc-800' : 'border-gray-100'}`}>
                         <Button
-                            variant="bumble"
+                            variant="primary"
                             className="w-full py-3 text-sm"
                             onClick={() => navigate('/host/keys')}
                         >

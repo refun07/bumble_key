@@ -125,7 +125,8 @@ const Register = () => {
                     <div>
                         <Button
                             type="submit"
-                            className="w-full"
+                            variant="primary"
+                            className="w-full py-3"
                             isLoading={isLoading}
                         >
                             Sign up

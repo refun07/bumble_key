@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
+import { useTheme } from '../../store/theme';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import api from '../../services/api';
 import Button from '../../components/common/Button';
+import { format } from 'date-fns';
 import {
     ChevronLeftIcon,
     PencilIcon,
@@ -9,12 +11,19 @@ import {
     KeyIcon
 } from '@heroicons/react/24/outline';
 
+interface NfcFob {
+    id: number;
+    fob_name: string;
+    fob_uid: string;
+}
+
 interface Assignment {
     id: number;
     state: string;
     pickup_code: string | null;
     drop_off_code: string | null;
     nfc_fob_id?: number;
+    nfc_fob?: NfcFob;
     guest?: {
         name: string;
     };
@@ -26,6 +35,10 @@ interface Assignment {
         }
     };
     created_at: string;
+    dropped_at: string | null;
+    picked_up_at: string | null;
+    returned_at: string | null;
+    closed_at: string | null;
 }
 
 interface Key {
@@ -44,6 +57,7 @@ interface Key {
 }
 
 const HostKeyDetails = () => {
+    const { isDarkMode } = useTheme();
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
     const [key, setKey] = useState<Key | null>(null);
@@ -65,8 +79,6 @@ const HostKeyDetails = () => {
         }
     };
 
-
-
     if (isLoading) {
         return (
             <div className="flex items-center justify-center min-h-[400px]">
@@ -81,74 +93,130 @@ const HostKeyDetails = () => {
 
     const currentHive = key.current_assignment?.cell?.hive;
 
+    // Helper to format operating hours
+    const formatOperatingHours = (hours: any) => {
+        if (!hours) return 'Everyday : Open 24 Hours';
+        // This is a placeholder, adjust based on actual structure
+        return 'Everyday : Open 24 Hours';
+    };
+
+    // Helper to format package type
+    const formatPackageType = (type: string) => {
+        return type.charAt(0).toUpperCase() + type.slice(1).replace('_', ' ') + ' Package';
+    };
+
+    // Build timeline events from assignments
+    const timelineEvents = key.assignments.flatMap(assignment => {
+        const events = [];
+        const hiveName = assignment.cell?.hive?.name || 'BumbleHive';
+
+        if (assignment.dropped_at) {
+            events.push({
+                id: `${assignment.id}-dropped`,
+                date: new Date(assignment.dropped_at),
+                text: `Key Dropped off at ${hiveName}`,
+                type: 'dropped'
+            });
+        }
+        if (assignment.picked_up_at) {
+            events.push({
+                id: `${assignment.id}-picked`,
+                date: new Date(assignment.picked_up_at),
+                text: `Key Picked up from ${hiveName}`,
+                type: 'picked'
+            });
+        }
+        if (assignment.returned_at) {
+            events.push({
+                id: `${assignment.id}-returned`,
+                date: new Date(assignment.returned_at),
+                text: `Key Returned to ${hiveName}`,
+                type: 'returned'
+            });
+        }
+
+        // Fallback for demo/initial states if no timestamps yet but state is set
+        if (events.length === 0 && assignment.created_at) {
+            events.push({
+                id: `${assignment.id}-created`,
+                date: new Date(assignment.created_at),
+                text: `Assignment created for ${hiveName}`,
+                type: 'created'
+            });
+        }
+
+        return events;
+    }).sort((a, b) => b.date.getTime() - a.date.getTime());
+
     return (
         <div className="max-w-6xl mx-auto space-y-8">
             <div className="flex items-center gap-4">
-                <Link to="/host/keys" className="p-2 hover:bg-gray-100 rounded-full transition-colors">
-                    <ChevronLeftIcon className="h-6 w-6 text-gray-600" />
+                <Link to="/host/keys" className="p-2 hover:bg-secondary rounded-full transition-colors">
+                    <ChevronLeftIcon className="h-6 w-6 text-secondary" />
                 </Link>
-                <h2 className="text-2xl font-bold text-gray-900">Key Details</h2>
+                <h2 className="text-2xl font-bold text-primary">Key Details</h2>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
                 {/* Left Column: Key Info */}
-                <div className="bg-white rounded-xl border-2 border-[#3B82F6] shadow-sm overflow-hidden flex flex-col">
-                    <div className="p-10 border-b border-gray-100 flex justify-between items-start">
+                <div className={`rounded-xl border-2 shadow-sm overflow-hidden flex flex-col ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-[#3B82F6]'}`}>
+                    <div className="p-10 border-b border-default flex justify-between items-start">
                         <div>
-                            <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Key Name</h3>
-                            <p className="text-2xl font-bold text-gray-900">{key.label}</p>
+                            <h3 className="text-xs font-bold text-secondary uppercase tracking-widest mb-2">Key Name</h3>
+                            <p className="text-2xl font-bold text-primary">{key.label}</p>
                         </div>
                         <div className="flex gap-2">
-                            <button className="p-2 hover:bg-gray-50 rounded-lg transition-colors">
-                                <PencilIcon className="h-5 w-5 text-gray-400" />
+                            <button className="p-2 hover:bg-secondary rounded-lg transition-colors">
+                                <PencilIcon className="h-5 w-5 text-secondary" />
                             </button>
-                            <button className="p-2 hover:bg-gray-50 rounded-lg transition-colors">
-                                <TrashIcon className="h-5 w-5 text-gray-400" />
+                            <button className="p-2 hover:bg-secondary rounded-lg transition-colors">
+                                <TrashIcon className="h-5 w-5 text-secondary" />
                             </button>
                         </div>
                     </div>
 
                     <div className="p-10 space-y-8 flex-1">
                         <div>
-                            <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">BumbleHive Address</h4>
-                            <p className="text-sm text-gray-500 font-medium leading-relaxed">
-                                {currentHive?.address || '21-22 Embankment Pl, London WC2N 6NN, UK'}
+                            <h4 className="text-xs font-bold text-secondary uppercase tracking-widest mb-2">BumbleHive Address</h4>
+                            <p className="text-sm text-secondary font-medium leading-relaxed">
+                                {currentHive?.address || 'No location assigned'}
                             </p>
                         </div>
 
                         <div>
-                            <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Opening Hours</h4>
-                            <p className="text-sm text-gray-500 font-medium">
-                                Everyday : Open 24 Hours
+                            <h4 className="text-xs font-bold text-secondary uppercase tracking-widest mb-2">Opening Hours</h4>
+                            <p className="text-sm text-secondary font-medium">
+                                {formatOperatingHours(currentHive?.operating_hours)}
                             </p>
                         </div>
 
                         <div>
-                            <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Fob ID</h4>
-                            <p className="text-sm text-gray-500 font-medium">
-                                FOB101022
+                            <h4 className="text-xs font-bold text-secondary uppercase tracking-widest mb-2">Fob ID</h4>
+                            <p className="text-sm text-secondary font-medium">
+                                {key.current_assignment?.nfc_fob?.fob_name || key.current_assignment?.nfc_fob?.fob_uid || 'Not assigned'}
                             </p>
                         </div>
 
                         <div>
-                            <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Subscription</h4>
-                            <p className="text-sm text-gray-500 font-medium capitalize">
-                                Monthly Package
+                            <h4 className="text-xs font-bold text-secondary uppercase tracking-widest mb-2">Subscription</h4>
+                            <p className="text-sm text-secondary font-medium capitalize">
+                                {formatPackageType(key.package_type)}
                             </p>
                         </div>
                     </div>
 
-                    <div className="p-10 bg-white border-t border-gray-100 flex gap-4">
+                    <div className="p-10 bg-primary border-t border-default flex gap-4">
                         <Button
                             variant="primary"
-                            className="flex-1 py-4 bg-black text-white hover:bg-gray-800 rounded-lg font-bold"
+                            className="flex-1 py-4"
                             onClick={() => navigate(`/host/keys/${key.id}/collection`)}
                         >
                             Get Collection Code
                         </Button>
                         <Button
                             variant="outline"
-                            className="flex-1 py-4 border-black text-black hover:bg-gray-50 rounded-lg font-bold"
+                            className="flex-1 py-4"
+                            onClick={() => navigate(`/host/keys/${key.id}/codes`)}
                         >
                             View Codes
                         </Button>
@@ -157,20 +225,20 @@ const HostKeyDetails = () => {
 
                 {/* Right Column: History */}
                 <div className="relative">
-                    <h3 className="text-xl font-bold text-gray-900 mb-6">History</h3>
-                    <div className="space-y-4 max-h-[700px] overflow-y-auto pr-4 scrollbar-hide border-r-4 border-[#450A0A]/10">
-                        {key.assignments.map((assignment, index) => (
+                    <h3 className="text-xl font-bold text-primary mb-6">History</h3>
+                    <div className="space-y-4 max-h-[700px] overflow-y-auto pr-4 scrollbar-hide border-r-4 border-default">
+                        {timelineEvents.map((event, index) => (
                             <div
-                                key={assignment.id}
+                                key={event.id}
                                 className={`p-6 rounded-xl border transition-all ${index === 0
-                                    ? 'bg-black border-black text-white shadow-lg'
-                                    : 'bg-white border-gray-100 text-gray-900 shadow-sm'
+                                    ? 'bg-bumble-black border-bumble-black text-white shadow-lg'
+                                    : 'bg-primary border-default text-primary shadow-sm'
                                     }`}
                             >
                                 <div className="flex justify-between items-start mb-2">
                                     <div className="flex items-center gap-2">
-                                        <span className={`text-sm font-bold ${index === 0 ? 'text-white' : 'text-gray-900'}`}>
-                                            03.01.2025 21:42
+                                        <span className={`text-sm font-bold ${index === 0 ? 'text-white' : 'text-primary'}`}>
+                                            {format(event.date, 'dd.MM.yyyy HH:mm')}
                                         </span>
                                     </div>
                                     {index === 0 && (
@@ -179,15 +247,15 @@ const HostKeyDetails = () => {
                                         </span>
                                     )}
                                 </div>
-                                <p className={`text-xs font-medium ${index === 0 ? 'text-gray-300' : 'text-gray-500'}`}>
-                                    Key Dropped off at <span className="font-bold">Melbourne-Ezymart Carlton</span>
+                                <p className={`text-xs font-medium ${index === 0 ? 'text-zinc-300' : 'text-secondary'}`}>
+                                    {event.text.split(' at ').map((part, i) => i === 1 ? <span key={i} className="font-bold">{part}</span> : part).reduce((prev, curr) => [prev, ' at ', curr] as any)}
                                 </p>
                             </div>
                         ))}
-                        {key.assignments.length === 0 && (
-                            <div className="text-center py-12 bg-white rounded-3xl border border-gray-50">
-                                <KeyIcon className="h-12 w-12 text-gray-200 mx-auto mb-3" />
-                                <p className="text-gray-400 font-medium">No history yet</p>
+                        {timelineEvents.length === 0 && (
+                            <div className="text-center py-12 bg-primary rounded-3xl border border-default">
+                                <KeyIcon className="h-12 w-12 text-secondary opacity-20 mx-auto mb-3" />
+                                <p className="text-secondary font-medium">No history yet</p>
                             </div>
                         )}
                     </div>

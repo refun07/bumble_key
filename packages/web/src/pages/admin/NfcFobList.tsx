@@ -1,6 +1,7 @@
 import { useEffect, useState, Fragment } from 'react';
 import api from '../../services/api';
 import { useToast } from '../../store/toast';
+import { useTheme } from '../../store/theme';
 import Button from '../../components/common/Button';
 import Input from '../../components/common/Input';
 import {
@@ -36,6 +37,7 @@ interface NfcFob {
 
 const NfcFobList = () => {
     const { showToast } = useToast();
+    const { isDarkMode } = useTheme();
     const [fobs, setFobs] = useState<NfcFob[]>([]);
     const [hives, setHives] = useState<Hive[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -176,60 +178,60 @@ const NfcFobList = () => {
             </div>
 
             {/* Filters Bar */}
-            <div className="flex flex-col lg:flex-row gap-6 items-center bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
-                <div className="relative flex-1 w-full">
+            <div className="flex flex-col lg:flex-row gap-4 lg:gap-6 items-stretch lg:items-center bg-primary p-4 lg:p-6 rounded-2xl lg:rounded-[32px] border border-default shadow-sm">
+                <div className="relative flex-1">
                     <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                         <MagnifyingGlassIcon className="h-5 w-5 text-gray-400" />
                     </div>
                     <input
                         type="text"
-                        className="block w-full pl-11 pr-4 py-3 border border-gray-200 rounded-xl leading-5 bg-gray-50/50 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-bumble-yellow focus:border-bumble-yellow sm:text-sm transition-all"
+                        className={`block w-full pl-11 pr-4 py-2.5 border rounded-xl leading-5 focus:outline-none focus:ring-2 focus:ring-bumble-yellow focus:border-bumble-yellow sm:text-sm transition-all ${isDarkMode ? 'bg-zinc-800 border-zinc-700 text-white placeholder-zinc-500' : 'bg-gray-50/50 border-gray-200 text-gray-900 placeholder-gray-400'}`}
                         placeholder="Search BumbleTags"
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
                     />
                 </div>
 
-                <div className="flex flex-wrap items-center gap-6 w-full lg:w-auto">
-                    <div className="flex items-center gap-3">
-                        <span className="text-sm font-bold text-gray-700 whitespace-nowrap">Hive Status</span>
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
+                    <div className="flex items-center gap-3 flex-1 sm:flex-none">
+                        <span className="text-sm font-bold text-secondary whitespace-nowrap">Hive</span>
                         <select
-                            className="block w-full sm:w-44 pl-4 pr-10 py-2.5 text-sm border-gray-200 focus:outline-none focus:ring-2 focus:ring-bumble-yellow focus:border-bumble-yellow rounded-xl border bg-white transition-all font-medium text-gray-700"
+                            className={`block w-full sm:w-40 pl-4 pr-10 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-bumble-yellow focus:border-bumble-yellow rounded-xl border transition-all font-medium ${isDarkMode ? 'bg-zinc-800 border-zinc-700 text-white' : 'bg-white border-gray-200 text-gray-700'}`}
                             value={hiveStatus}
                             onChange={(e) => setHiveStatus(e.target.value)}
                         >
                             <option value="all">All</option>
-                            <option value="assigned">Hive Assigned</option>
-                            <option value="unassigned">Not Assigned</option>
+                            <option value="assigned">Assigned</option>
+                            <option value="unassigned">Unassigned</option>
                         </select>
                     </div>
 
-                    <div className="flex items-center gap-3">
-                        <span className="text-sm font-bold text-gray-700 whitespace-nowrap">Slot Status</span>
+                    <div className="flex items-center gap-3 flex-1 sm:flex-none">
+                        <span className="text-sm font-bold text-secondary whitespace-nowrap">Slot</span>
                         <select
-                            className="block w-full sm:w-44 pl-4 pr-10 py-2.5 text-sm border-gray-200 focus:outline-none focus:ring-2 focus:ring-bumble-yellow focus:border-bumble-yellow rounded-xl border bg-white transition-all font-medium text-gray-700"
+                            className={`block w-full sm:w-40 pl-4 pr-10 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-bumble-yellow focus:border-bumble-yellow rounded-xl border transition-all font-medium ${isDarkMode ? 'bg-zinc-800 border-zinc-700 text-white' : 'bg-white border-gray-200 text-gray-700'}`}
                             value={slotStatus}
                             onChange={(e) => setSlotStatus(e.target.value)}
                         >
                             <option value="all">All</option>
-                            <option value="assigned">Slot Assigned</option>
-                            <option value="unassigned">Not Assigned</option>
+                            <option value="assigned">Assigned</option>
+                            <option value="unassigned">Unassigned</option>
                         </select>
                     </div>
 
                     <Button
                         variant="outline"
                         onClick={resetFilters}
-                        className="flex-1 sm:flex-none flex items-center justify-center gap-2 border-gray-200 text-gray-700 hover:bg-gray-50 px-6 py-2.5 rounded-xl font-bold transition-all"
+                        className={`flex items-center justify-center gap-2 border-default text-secondary transition-all rounded-xl px-6 py-2.5 font-bold ${isDarkMode ? 'hover:bg-zinc-800 hover:text-white' : 'hover:bg-gray-50 hover:text-gray-900'}`}
                     >
                         <ArrowPathIcon className="h-4 w-4 stroke-[2.5]" />
-                        Reset Filters
+                        Reset
                     </Button>
                 </div>
             </div>
 
             {/* List Header - Hidden on Mobile */}
-            <div className="hidden md:grid grid-cols-5 px-8 py-3 text-xs font-bold text-gray-400 uppercase tracking-widest">
+            <div className="hidden lg:grid grid-cols-5 px-8 py-3 text-xs font-bold text-secondary uppercase tracking-widest">
                 <div className="col-span-1">Fob Name</div>
                 <div className="col-span-1">Fob UID</div>
                 <div className="col-span-1">Assigned Hive</div>
@@ -249,70 +251,100 @@ const NfcFobList = () => {
                         </div>
                     </div>
                 ) : fobs.length === 0 ? (
-                    <div className="text-center py-20 text-gray-500 bg-white rounded-3xl border border-gray-100 shadow-sm italic font-medium">
+                    <div className="text-center py-20 text-secondary bg-primary rounded-3xl border border-default shadow-sm italic font-medium">
                         No NFC fobs found matching your criteria.
                     </div>
                 ) : (
                     fobs.map((fob) => (
                         <div
                             key={fob.id}
-                            className="bg-white rounded-2xl shadow-sm border border-gray-100 hover:shadow-md hover:border-bumble-yellow/30 transition-all duration-300 overflow-hidden group"
+                            className="bg-primary rounded-3xl lg:rounded-[32px] shadow-sm border border-default hover:border-bumble-yellow hover:shadow-md transition-all duration-200 overflow-hidden group"
                         >
-                            <div className="grid grid-cols-1 md:grid-cols-5 items-center px-8 py-6 gap-4 md:gap-0">
-                                {/* Fob Name */}
+                            {/* Desktop Layout */}
+                            <div className="hidden lg:grid grid-cols-5 items-center px-8 py-6">
                                 <div className="col-span-1 flex items-center gap-4">
-                                    <div className="bg-gray-50 p-3 rounded-xl group-hover:bg-bumble-yellow/10 transition-colors">
-                                        <SignalIcon className="h-6 w-6 text-gray-400 group-hover:text-bumble-black transition-colors" />
+                                    <div className={`p-3 rounded-xl transition-colors ${isDarkMode ? 'bg-zinc-800 group-hover:bg-bumble-yellow/10' : 'bg-gray-50 group-hover:bg-bumble-yellow/10'}`}>
+                                        <SignalIcon className={`h-6 w-6 transition-colors ${isDarkMode ? 'text-zinc-500 group-hover:text-bumble-yellow' : 'text-gray-400 group-hover:text-bumble-black'}`} />
                                     </div>
-                                    <div>
-                                        <p className="font-bold text-gray-900 text-lg">{fob.fob_name}</p>
-                                        <p className="text-xs text-gray-400 md:hidden font-bold uppercase tracking-wider">Fob Name</p>
-                                    </div>
+                                    <p className="font-bold text-primary">{fob.fob_name}</p>
                                 </div>
 
-                                {/* Fob UID */}
                                 <div className="col-span-1">
-                                    <p className="md:hidden text-xs font-bold text-gray-400 mb-1 uppercase tracking-wider">Fob UID</p>
-                                    <span className="font-mono text-sm font-bold text-gray-600 bg-gray-50 px-3 py-1 rounded-lg border border-gray-100">
+                                    <span className={`font-mono text-sm font-bold px-3 py-1 rounded-lg border ${isDarkMode ? 'text-zinc-300 bg-zinc-800 border-zinc-700' : 'text-gray-600 bg-gray-50 border-gray-100'}`}>
                                         {fob.fob_uid}
                                     </span>
                                 </div>
 
-                                {/* Assigned Hive */}
                                 <div className="col-span-1 flex items-center gap-3">
-                                    <div className="hidden md:block bg-gray-50 p-2 rounded-lg">
-                                        <BuildingStorefrontIcon className="h-5 w-5 text-gray-400" />
+                                    <div className={`p-2 rounded-lg ${isDarkMode ? 'bg-zinc-800' : 'bg-gray-50'}`}>
+                                        <BuildingStorefrontIcon className={`h-5 w-5 ${isDarkMode ? 'text-zinc-500' : 'text-gray-400'}`} />
                                     </div>
-                                    <div>
-                                        <p className="md:hidden text-xs font-bold text-gray-400 mb-1 uppercase tracking-wider">Assigned Hive</p>
-                                        <p className={`text-sm font-bold ${fob.hive ? 'text-gray-900' : 'text-gray-400 italic'}`}>
-                                            {fob.hive?.name || 'Not Assigned'}
-                                        </p>
-                                    </div>
+                                    <p className={`text-sm font-bold ${fob.hive ? 'text-primary' : 'text-secondary/40 italic'}`}>
+                                        {fob.hive?.name || 'Not Assigned'}
+                                    </p>
                                 </div>
 
-                                {/* Assigned Slot */}
                                 <div className="col-span-1 flex items-center gap-3">
-                                    <div className="hidden md:block bg-gray-50 p-2 rounded-lg">
-                                        <RectangleGroupIcon className="h-5 w-5 text-gray-400" />
+                                    <div className={`p-2 rounded-lg ${isDarkMode ? 'bg-zinc-800' : 'bg-gray-50'}`}>
+                                        <RectangleGroupIcon className={`h-5 w-5 ${isDarkMode ? 'text-zinc-500' : 'text-gray-400'}`} />
                                     </div>
-                                    <div>
-                                        <p className="md:hidden text-xs font-bold text-gray-400 mb-1 uppercase tracking-wider">Assigned Slot</p>
-                                        <p className={`text-sm font-bold ${fob.assigned_slot ? 'text-gray-900' : 'text-gray-400 italic'}`}>
-                                            {fob.assigned_slot || 'Not Assigned'}
-                                        </p>
-                                    </div>
+                                    <p className={`text-sm font-bold ${fob.assigned_slot ? 'text-primary' : 'text-secondary/40 italic'}`}>
+                                        {fob.assigned_slot || 'Not Assigned'}
+                                    </p>
                                 </div>
 
-                                {/* Actions */}
                                 <div className="col-span-1 flex items-center justify-end">
                                     <button
                                         onClick={() => handleEditClick(fob)}
-                                        className="p-3 text-gray-400 hover:text-bumble-black hover:bg-bumble-yellow rounded-xl transition-all shadow-sm hover:shadow-md border border-transparent hover:border-bumble-yellow/20"
+                                        className={`p-2 rounded-xl transition-all ${isDarkMode ? 'text-zinc-500 hover:text-bumble-yellow hover:bg-bumble-yellow/10' : 'text-gray-400 hover:text-bumble-yellow-dark hover:bg-bumble-yellow/10'}`}
                                         title="Edit Fob"
                                     >
                                         <PencilSquareIcon className="h-6 w-6" />
                                     </button>
+                                </div>
+                            </div>
+
+                            {/* Mobile Layout */}
+                            <div className="lg:hidden p-6 space-y-6">
+                                <div className="flex justify-between items-start">
+                                    <div className="flex items-center gap-4">
+                                        <div className="bg-gray-50 p-3 rounded-xl">
+                                            <SignalIcon className="h-6 w-6 text-gray-400" />
+                                        </div>
+                                        <div>
+                                            <p className="font-bold text-gray-900 text-lg">{fob.fob_name}</p>
+                                            <span className="font-mono text-xs font-bold text-gray-500">
+                                                {fob.fob_uid}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <button
+                                        onClick={() => handleEditClick(fob)}
+                                        className="p-2 text-gray-400 hover:text-bumble-yellow-dark hover:bg-bumble-yellow/10 rounded-xl transition-all"
+                                    >
+                                        <PencilSquareIcon className="h-6 w-6" />
+                                    </button>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4 pt-4 border-t border-gray-50">
+                                    <div>
+                                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">Assigned Hive</p>
+                                        <div className="flex items-center gap-2">
+                                            <BuildingStorefrontIcon className="h-4 w-4 text-gray-400" />
+                                            <p className={`text-sm font-bold ${fob.hive ? 'text-gray-900' : 'text-gray-400 italic'}`}>
+                                                {fob.hive?.name || 'Not Assigned'}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">Assigned Slot</p>
+                                        <div className="flex items-center gap-2">
+                                            <RectangleGroupIcon className="h-4 w-4 text-gray-400" />
+                                            <p className={`text-sm font-bold ${fob.assigned_slot ? 'text-gray-900' : 'text-gray-400 italic'}`}>
+                                                {fob.assigned_slot || 'Not Assigned'}
+                                            </p>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -332,7 +364,7 @@ const NfcFobList = () => {
                         leaveFrom="opacity-100"
                         leaveTo="opacity-0"
                     >
-                        <div className="fixed inset-0 bg-gray-500/75 backdrop-blur-sm transition-opacity" />
+                        <div className={`fixed inset-0 backdrop-blur-sm transition-opacity ${isDarkMode ? 'bg-zinc-950/80' : 'bg-gray-500/75'}`} />
                     </Transition.Child>
 
                     <div className="fixed inset-0 z-10 overflow-y-auto">
@@ -346,11 +378,11 @@ const NfcFobList = () => {
                                 leaveFrom="opacity-100 translate-y-0 sm:scale-100"
                                 leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
                             >
-                                <Dialog.Panel className="relative transform overflow-hidden rounded-3xl bg-white px-4 pb-4 pt-5 text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-2xl sm:p-10">
+                                <Dialog.Panel className={`relative transform overflow-hidden rounded-3xl px-4 pb-4 pt-5 text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-2xl sm:p-10 ${isDarkMode ? 'bg-zinc-900' : 'bg-white'}`}>
                                     <div className="absolute right-0 top-0 pr-6 pt-6">
                                         <button
                                             type="button"
-                                            className="rounded-full bg-gray-50 p-2 text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none transition-all"
+                                            className={`rounded-full p-2 focus:outline-none transition-all ${isDarkMode ? 'bg-zinc-800 text-zinc-500 hover:text-zinc-400 hover:bg-zinc-700' : 'bg-gray-50 text-gray-400 hover:text-gray-500 hover:bg-gray-100'}`}
                                             onClick={() => setIsModalOpen(false)}
                                         >
                                             <XMarkIcon className="h-6 w-6" aria-hidden="true" />
@@ -358,13 +390,13 @@ const NfcFobList = () => {
                                     </div>
                                     <div>
                                         <div className="text-left">
-                                            <Dialog.Title as="h3" className="text-2xl font-bold leading-6 text-gray-900">
+                                            <Dialog.Title as="h3" className="text-2xl font-bold leading-6 text-primary">
                                                 Add/Edit Fob
                                             </Dialog.Title>
                                             <form onSubmit={handleSave} className="mt-10 space-y-10">
                                                 {/* Fob Details Section */}
-                                                <div className="bg-gray-50/50 p-6 rounded-2xl border border-gray-100">
-                                                    <h4 className="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2">
+                                                <div className={`p-6 rounded-2xl border ${isDarkMode ? 'bg-zinc-800/50 border-zinc-700' : 'bg-gray-50/50 border-gray-100'}`}>
+                                                    <h4 className="text-lg font-bold text-primary mb-6 flex items-center gap-2">
                                                         <span className="w-1.5 h-6 bg-bumble-yellow rounded-full"></span>
                                                         Fob Details
                                                     </h4>
@@ -386,9 +418,9 @@ const NfcFobList = () => {
                                                                 onChange={(e) => setFormData({ ...formData, fob_uid: e.target.value })}
                                                                 error={errors.fob_uid?.[0]}
                                                                 required
-                                                                className="rounded-xl border-gray-200 py-3"
+                                                                className={`rounded-xl py-3 ${isDarkMode ? 'border-zinc-700' : 'border-gray-200'}`}
                                                             />
-                                                            <p className="text-xs text-gray-400 font-medium italic">
+                                                            <p className={`text-xs font-medium italic ${isDarkMode ? 'text-zinc-500' : 'text-gray-400'}`}>
                                                                 Please use your app to scan the fob to register the UID
                                                             </p>
                                                         </div>
@@ -396,34 +428,34 @@ const NfcFobList = () => {
                                                 </div>
 
                                                 {/* Assign Section */}
-                                                <div className="bg-gray-50/50 p-6 rounded-2xl border border-gray-100">
-                                                    <h4 className="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2">
+                                                <div className={`p-6 rounded-2xl border ${isDarkMode ? 'bg-zinc-800/50 border-zinc-700' : 'bg-gray-50/50 border-gray-100'}`}>
+                                                    <h4 className="text-lg font-bold text-primary mb-6 flex items-center gap-2">
                                                         <span className="w-1.5 h-6 bg-bumble-yellow rounded-full"></span>
                                                         Assign Fob to a Box
                                                     </h4>
                                                     <div className="space-y-6">
                                                         <div className="space-y-2">
-                                                            <label className="block text-sm font-bold text-gray-700">Assign To Box</label>
+                                                            <label className="block text-sm font-bold text-secondary">Assign To Box</label>
                                                             <div className="relative">
                                                                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                                                                     <MagnifyingGlassIcon className="h-5 w-5 text-gray-400" />
                                                                 </div>
                                                                 <input
                                                                     type="text"
-                                                                    className="block w-full pl-11 pr-4 py-3 border border-gray-200 rounded-xl leading-5 bg-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-bumble-yellow focus:border-bumble-yellow sm:text-sm transition-all"
+                                                                    className={`block w-full pl-11 pr-4 py-3 border rounded-xl leading-5 focus:outline-none focus:ring-2 focus:ring-bumble-yellow focus:border-bumble-yellow sm:text-sm transition-all ${isDarkMode ? 'bg-zinc-900 border-zinc-700 text-white placeholder-zinc-600' : 'bg-white border-gray-200 text-gray-900 placeholder-gray-400'}`}
                                                                     placeholder="Search Box"
                                                                     value={hiveSearch}
                                                                     onChange={(e) => setHiveSearch(e.target.value)}
                                                                 />
                                                             </div>
                                                             {hiveSearch && (
-                                                                <div className="mt-2 max-h-40 overflow-y-auto bg-white border border-gray-100 rounded-xl shadow-sm divide-y divide-gray-50">
+                                                                <div className={`mt-2 max-h-40 overflow-y-auto border rounded-xl shadow-sm divide-y ${isDarkMode ? 'bg-zinc-800 border-zinc-700 divide-zinc-700' : 'bg-white border-gray-100 divide-gray-50'}`}>
                                                                     {filteredHives.length > 0 ? (
                                                                         filteredHives.map(hive => (
                                                                             <button
                                                                                 key={hive.id}
                                                                                 type="button"
-                                                                                className={`w-full text-left px-4 py-3 text-sm hover:bg-gray-50 transition-colors font-medium ${formData.assigned_hive_id === hive.id ? 'bg-yellow-50 text-bumble-black' : 'text-gray-700'}`}
+                                                                                className={`w-full text-left px-4 py-3 text-sm transition-colors font-medium ${formData.assigned_hive_id === hive.id ? (isDarkMode ? 'bg-bumble-yellow/10 text-bumble-yellow' : 'bg-yellow-50 text-bumble-black') : (isDarkMode ? 'text-zinc-300 hover:bg-zinc-700' : 'text-gray-700 hover:bg-gray-50')}`}
                                                                                 onClick={() => {
                                                                                     setFormData({ ...formData, assigned_hive_id: hive.id });
                                                                                     setHiveSearch(hive.name);
@@ -433,7 +465,7 @@ const NfcFobList = () => {
                                                                             </button>
                                                                         ))
                                                                     ) : (
-                                                                        <div className="px-4 py-3 text-sm text-gray-400 italic">No boxes found</div>
+                                                                        <div className="px-4 py-3 text-sm text-secondary italic">No boxes found</div>
                                                                     )}
                                                                 </div>
                                                             )}
@@ -446,7 +478,7 @@ const NfcFobList = () => {
                                                             value={formData.assigned_slot}
                                                             onChange={(e) => setFormData({ ...formData, assigned_slot: e.target.value })}
                                                             error={errors.assigned_slot?.[0]}
-                                                            className="rounded-xl border-gray-200 py-3"
+                                                            className={`rounded-xl py-3 ${isDarkMode ? 'border-zinc-700' : 'border-gray-200'}`}
                                                         />
                                                     </div>
                                                 </div>
@@ -454,8 +486,8 @@ const NfcFobList = () => {
                                                 <div className="pt-4">
                                                     <Button
                                                         type="submit"
-                                                        variant="secondary"
-                                                        className="w-full py-4 rounded-xl font-bold shadow-lg shadow-gray-200 hover:shadow-xl transition-all"
+                                                        variant="bumble"
+                                                        className={`w-full py-4 rounded-xl font-bold shadow-lg transition-all ${isDarkMode ? 'shadow-black/20' : 'shadow-gray-200'}`}
                                                         isLoading={isSaving}
                                                     >
                                                         Confirm

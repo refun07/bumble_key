@@ -4,8 +4,10 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Key;
+use App\Models\Hive;
 use Illuminate\Http\Request;
 use App\Services\AuditLogger;
+use Illuminate\Support\Str;
 
 class KeyController extends Controller
 {
@@ -48,11 +50,15 @@ class KeyController extends Controller
 
         // If hive_id is provided, create a pending drop-off assignment
         if (!empty($validated['hive_id'])) {
+            $hive = Hive::findOrFail($validated['hive_id']);
+
             $key->assignments()->create([
-                'hive_id' => $validated['hive_id'],
+                'hive_id' => $hive->id,
                 'host_id' => $request->user()->id,
+                'partner_id' => $hive->partner_id,
                 'state' => 'pending_drop',
-                'drop_off_code' => rand(100000, 999999), // Simple 6-digit code
+                'drop_off_code' => strtoupper(Str::random(6)), // Unique 6-character code
+                'pickup_code' => strtoupper(Str::random(6)),   // Unique 6-character code
             ]);
 
             $key->update(['status' => 'assigned']);
@@ -72,8 +78,9 @@ class KeyController extends Controller
             ->with([
                 'property',
                 'currentAssignment.cell.hive',
+                'currentAssignment.nfcFob',
                 'assignments' => function ($query) {
-                    $query->with(['cell.hive', 'guest'])->latest();
+                    $query->with(['cell.hive', 'guest', 'nfcFob'])->latest();
                 }
             ])
             ->findOrFail($id);

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTheme } from '../../store/theme';
 import {
     UserCircleIcon,
     BellIcon,
@@ -21,6 +22,7 @@ const sections: SettingSection[] = [
 ];
 
 const HostSettings = () => {
+    const { isDarkMode } = useTheme();
     const { user } = useAuth();
     const { showToast } = useToast();
     const [activeSection, setActiveSection] = useState('profile');
@@ -84,64 +86,64 @@ const HostSettings = () => {
                 return (
                     <div className="space-y-6 animate-fade-in-up">
                         <div>
-                            <h3 className="text-lg font-bold text-gray-900 dark:text-white">Profile Settings</h3>
-                            <p className="text-sm text-gray-500 dark:text-zinc-400">Update your personal information and password.</p>
+                            <h3 className="text-lg font-bold text-primary">Profile Settings</h3>
+                            <p className="text-sm text-secondary">Update your personal information and password.</p>
                         </div>
 
                         <form onSubmit={handleUpdateProfile} className="space-y-6 max-w-2xl">
                             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                                 <div className="col-span-2 sm:col-span-1">
-                                    <label className="block text-sm font-bold text-gray-700 dark:text-zinc-300 mb-2">Full Name</label>
+                                    <label className="block text-sm font-bold text-secondary mb-2">Full Name</label>
                                     <input
                                         type="text"
                                         value={profileData.name}
                                         onChange={(e) => setProfileData({ ...profileData, name: e.target.value })}
-                                        className="w-full rounded-xl border-gray-200 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white focus:border-bumble-yellow focus:ring-bumble-yellow/20 transition-all"
+                                        className={`w-full rounded-xl border transition-all focus:border-bumble-yellow focus:ring-bumble-yellow/20 ${isDarkMode ? 'bg-zinc-800 border-zinc-700 text-white' : 'bg-white border-gray-200 text-gray-900'}`}
                                     />
                                 </div>
 
                                 <div className="col-span-2 sm:col-span-1">
-                                    <label className="block text-sm font-bold text-gray-700 dark:text-zinc-300 mb-2">Email Address</label>
+                                    <label className="block text-sm font-bold text-secondary mb-2">Email Address</label>
                                     <input
                                         type="email"
                                         value={profileData.email}
                                         onChange={(e) => setProfileData({ ...profileData, email: e.target.value })}
-                                        className="w-full rounded-xl border-gray-200 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white focus:border-bumble-yellow focus:ring-bumble-yellow/20 transition-all"
+                                        className={`w-full rounded-xl border transition-all focus:border-bumble-yellow focus:ring-bumble-yellow/20 ${isDarkMode ? 'bg-zinc-800 border-zinc-700 text-white' : 'bg-white border-gray-200 text-gray-900'}`}
                                     />
                                 </div>
 
                                 <div className="col-span-2">
-                                    <div className="border-t border-gray-100 dark:border-zinc-800 my-4"></div>
-                                    <h4 className="text-sm font-bold text-gray-900 dark:text-white mb-4">Change Password</h4>
+                                    <div className={`border-t my-4 ${isDarkMode ? 'border-zinc-800' : 'border-gray-100'}`}></div>
+                                    <h4 className="text-sm font-bold text-primary mb-4">Change Password</h4>
                                 </div>
 
                                 <div className="col-span-2">
-                                    <label className="block text-sm font-bold text-gray-700 dark:text-zinc-300 mb-2">Current Password</label>
+                                    <label className="block text-sm font-bold text-secondary mb-2">Current Password</label>
                                     <input
                                         type="password"
                                         value={profileData.currentPassword}
                                         onChange={(e) => setProfileData({ ...profileData, currentPassword: e.target.value })}
-                                        className="w-full rounded-xl border-gray-200 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white focus:border-bumble-yellow focus:ring-bumble-yellow/20 transition-all"
+                                        className={`w-full rounded-xl border transition-all focus:border-bumble-yellow focus:ring-bumble-yellow/20 ${isDarkMode ? 'bg-zinc-800 border-zinc-700 text-white' : 'bg-white border-gray-200 text-gray-900'}`}
                                     />
                                 </div>
 
                                 <div className="col-span-2 sm:col-span-1">
-                                    <label className="block text-sm font-bold text-gray-700 dark:text-zinc-300 mb-2">New Password</label>
+                                    <label className="block text-sm font-bold text-secondary mb-2">New Password</label>
                                     <input
                                         type="password"
                                         value={profileData.newPassword}
                                         onChange={(e) => setProfileData({ ...profileData, newPassword: e.target.value })}
-                                        className="w-full rounded-xl border-gray-200 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white focus:border-bumble-yellow focus:ring-bumble-yellow/20 transition-all"
+                                        className={`w-full rounded-xl border transition-all focus:border-bumble-yellow focus:ring-bumble-yellow/20 ${isDarkMode ? 'bg-zinc-800 border-zinc-700 text-white' : 'bg-white border-gray-200 text-gray-900'}`}
                                     />
                                 </div>
 
                                 <div className="col-span-2 sm:col-span-1">
-                                    <label className="block text-sm font-bold text-gray-700 dark:text-zinc-300 mb-2">Confirm New Password</label>
+                                    <label className="block text-sm font-bold text-secondary mb-2">Confirm New Password</label>
                                     <input
                                         type="password"
                                         value={profileData.confirmPassword}
                                         onChange={(e) => setProfileData({ ...profileData, confirmPassword: e.target.value })}
-                                        className="w-full rounded-xl border-gray-200 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white focus:border-bumble-yellow focus:ring-bumble-yellow/20 transition-all"
+                                        className={`w-full rounded-xl border transition-all focus:border-bumble-yellow focus:ring-bumble-yellow/20 ${isDarkMode ? 'bg-zinc-800 border-zinc-700 text-white' : 'bg-white border-gray-200 text-gray-900'}`}
                                     />
                                 </div>
                             </div>
@@ -164,8 +166,8 @@ const HostSettings = () => {
                 return (
                     <div className="space-y-6 animate-fade-in-up">
                         <div>
-                            <h3 className="text-lg font-bold text-gray-900 dark:text-white">Notification Preferences</h3>
-                            <p className="text-sm text-gray-500 dark:text-zinc-400">Manage how you receive updates.</p>
+                            <h3 className="text-lg font-bold text-primary">Notification Preferences</h3>
+                            <p className="text-sm text-secondary">Manage how you receive updates.</p>
                         </div>
 
                         <div className="space-y-4">
@@ -174,10 +176,10 @@ const HostSettings = () => {
                                 { id: 'push', label: 'Push Notifications', desc: 'Receive real-time alerts on your device' },
                                 { id: 'sms', label: 'SMS Notifications', desc: 'Receive urgent updates via text message' }
                             ].map((item) => (
-                                <div key={item.id} className="flex items-center justify-between p-4 rounded-xl border border-gray-100 dark:border-zinc-800 bg-white dark:bg-zinc-900">
+                                <div key={item.id} className={`flex items-center justify-between p-4 rounded-xl border ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-gray-100'}`}>
                                     <div>
-                                        <p className="font-bold text-gray-900 dark:text-white">{item.label}</p>
-                                        <p className="text-sm text-gray-500 dark:text-zinc-400">{item.desc}</p>
+                                        <p className="font-bold text-primary">{item.label}</p>
+                                        <p className="text-sm text-secondary">{item.desc}</p>
                                     </div>
                                     <label className="relative inline-flex items-center cursor-pointer">
                                         <input
@@ -209,8 +211,8 @@ const HostSettings = () => {
                 return (
                     <div className="space-y-6 animate-fade-in-up">
                         <div>
-                            <h3 className="text-lg font-bold text-gray-900 dark:text-white">Security Settings</h3>
-                            <p className="text-sm text-gray-500 dark:text-zinc-400">Manage your account security.</p>
+                            <h3 className="text-lg font-bold text-primary">Security Settings</h3>
+                            <p className="text-sm text-secondary">Manage your account security.</p>
                         </div>
                         <div className="p-4 rounded-xl bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-100 dark:border-yellow-900/50 text-yellow-800 dark:text-yellow-200 text-sm">
                             Two-factor authentication is currently disabled. Contact support to enable it.
@@ -226,8 +228,8 @@ const HostSettings = () => {
     return (
         <div className="max-w-6xl mx-auto">
             <div className="mb-8">
-                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Settings</h1>
-                <p className="text-gray-500 dark:text-zinc-400">Manage your account settings and preferences.</p>
+                <h1 className="text-2xl font-bold text-primary">Settings</h1>
+                <p className="text-secondary">Manage your account settings and preferences.</p>
             </div>
 
             <div className="flex flex-col lg:flex-row gap-8">
@@ -239,11 +241,11 @@ const HostSettings = () => {
                                 key={section.id}
                                 onClick={() => setActiveSection(section.id)}
                                 className={`w-full flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-all ${activeSection === section.id
-                                    ? 'bg-bumble-yellow text-bumble-black shadow-lg shadow-bumble-yellow/20'
-                                    : 'text-gray-600 dark:text-zinc-400 hover:bg-gray-50 dark:hover:bg-zinc-800 hover:text-gray-900 dark:hover:text-white'
+                                    ? 'bg-bumble-yellow text-gray-900 shadow-lg shadow-bumble-yellow/20'
+                                    : (isDarkMode ? 'text-zinc-400 hover:bg-zinc-800 hover:text-white' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900')
                                     }`}
                             >
-                                <section.icon className={`mr-3 h-5 w-5 ${activeSection === section.id ? 'text-bumble-black' : 'text-gray-400 dark:text-zinc-500'}`} />
+                                <section.icon className={`mr-3 h-5 w-5 ${activeSection === section.id ? 'text-gray-900' : (isDarkMode ? 'text-zinc-500' : 'text-gray-400')}`} />
                                 {section.name}
                             </button>
                         ))}
@@ -252,8 +254,8 @@ const HostSettings = () => {
 
                 {/* Main Content Area */}
                 <div className="flex-1">
-                    <div className="bg-white dark:bg-zinc-900 rounded-3xl border border-gray-100 dark:border-zinc-800 p-8 shadow-sm min-h-[500px]">
-                        <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6 border-b border-gray-100 dark:border-zinc-800 pb-4">
+                    <div className={`rounded-3xl border p-8 shadow-sm min-h-[500px] ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-gray-100'}`}>
+                        <h2 className={`text-xl font-bold text-primary mb-6 border-b pb-4 ${isDarkMode ? 'border-zinc-800' : 'border-gray-100'}`}>
                             {sections.find(s => s.id === activeSection)?.name}
                         </h2>
                         {renderSection()}

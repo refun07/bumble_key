@@ -15,14 +15,15 @@ const Button: React.FC<ButtonProps> = ({
     disabled,
     ...props
 }) => {
-    const baseStyles = 'inline-flex items-center justify-center rounded-md font-medium transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed active:scale-95';
+    const baseStyles = 'inline-flex items-center justify-center rounded-md font-medium transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 min-h-[44px] touch-manipulation';
 
     const variants = {
-        primary: 'bg-bumble-yellow text-bumble-black hover:bg-yellow-400 focus:ring-yellow-500',
-        secondary: 'bg-bumble-black text-white hover:bg-gray-800 focus:ring-gray-500',
-        outline: 'border border-gray-300 bg-transparent text-gray-700 hover:bg-gray-50 focus:ring-gray-500',
-        danger: 'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500',
-        bumble: 'bg-black text-white font-bold hover:bg-gray-900 shadow-md hover:shadow-lg hover:scale-[1.02] focus:ring-black rounded-xl',
+        primary: 'bg-black text-white font-bold hover:bg-gray-900 shadow-md hover:shadow-lg hover:scale-[1.02] focus:ring-black rounded-xl',
+        secondary: 'bg-bumble-yellow text-bumble-black font-bold hover:bg-yellow-400 shadow-sm hover:shadow-md hover:scale-[1.01] focus:ring-yellow-500 rounded-xl',
+        outline: 'border-2 border-black dark:border-white bg-transparent text-black dark:text-white font-bold hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black focus:ring-black dark:focus:ring-white rounded-xl',
+        danger: 'bg-red-600 text-white font-bold hover:bg-red-700 focus:ring-red-500 rounded-xl',
+        ghost: 'bg-transparent text-gray-600 dark:text-zinc-400 hover:bg-gray-100 dark:hover:bg-zinc-800 hover:text-gray-900 dark:hover:text-white focus:ring-gray-500 rounded-xl',
+        bumble: 'bg-black text-white font-bold hover:bg-gray-900 shadow-md hover:shadow-lg hover:scale-[1.02] focus:ring-black rounded-xl', // Keep for backward compatibility
     };
 
     const sizes = {

@@ -75,8 +75,8 @@ const HostDashboard = () => {
     return (
         <div className="space-y-8">
             <div>
-                <h2 className="text-2xl font-bold text-gray-900">Dashboard Overview</h2>
-                <p className="text-gray-500">Welcome back! Here's what's happening with your keys.</p>
+                <h2 className="text-2xl font-bold text-primary">Dashboard Overview</h2>
+                <p className="text-secondary">Welcome back! Here's what's happening with your keys.</p>
             </div>
 
             {/* Stats Grid */}
@@ -87,51 +87,53 @@ const HostDashboard = () => {
                     { label: 'Pending Drops', value: stats.pending_drops, icon: ArrowPathIcon, color: 'bg-orange-500' },
                     { label: 'Total Earnings', value: `$${stats.total_earnings}`, icon: CheckCircleIcon, color: 'bg-bumble-yellow' },
                 ].map((stat) => (
-                    <div key={stat.label} className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
+                    <div key={stat.label} className="bg-primary p-6 rounded-3xl border border-default shadow-sm">
                         <div className="flex items-center justify-between mb-4">
                             <div className={`p-3 rounded-2xl ${stat.color} bg-opacity-10`}>
                                 <stat.icon className={`h-6 w-6 ${stat.color.replace('bg-', 'text-')}`} />
                             </div>
                         </div>
-                        <p className="text-sm font-bold text-gray-400 uppercase tracking-wider">{stat.label}</p>
-                        <p className="text-3xl font-bold text-gray-900 mt-1">{stat.value}</p>
+                        <p className="text-sm font-bold text-secondary uppercase tracking-wider">{stat.label}</p>
+                        <p className="text-3xl font-bold text-primary mt-1">{stat.value}</p>
                     </div>
                 ))}
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {/* Recent Activity */}
-                <div className="lg:col-span-2 bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
-                    <div className="p-8 border-b border-gray-50 flex justify-between items-center">
-                        <h3 className="text-lg font-bold text-gray-900">Recent Activity</h3>
+                <div className="lg:col-span-2 bg-primary rounded-3xl border border-default shadow-sm overflow-hidden">
+                    <div className="p-8 border-b border-default flex justify-between items-center">
+                        <h3 className="text-lg font-bold text-primary">Recent Activity</h3>
                         <Link to="/host/keys" className="text-sm font-bold text-bumble-yellow hover:underline">View All</Link>
                     </div>
-                    <div className="divide-y divide-gray-50">
+                    <div className="divide-y border-default">
                         {recentActivity.map((activity) => (
-                            <div key={activity.id} className="p-6 flex items-center justify-between hover:bg-gray-50 transition-colors">
+                            <div key={activity.id} className="p-6 flex items-center justify-between hover:bg-secondary transition-colors">
                                 <div className="flex items-center gap-4">
-                                    <div className="p-2 bg-gray-100 rounded-xl">
-                                        <ClockIcon className="h-5 w-5 text-gray-400" />
+                                    <div className="p-2 bg-secondary rounded-xl">
+                                        <ClockIcon className="h-5 w-5 text-secondary" />
                                     </div>
                                     <div>
-                                        <p className="text-sm font-bold text-gray-900">
-                                            {activity.guest_name} <span className="font-medium text-gray-500">
+                                        <p className="text-sm font-bold text-primary">
+                                            {activity.guest_name} <span className="font-medium text-secondary">
                                                 {activity.state === 'picked_up' ? 'picked up' : 'is assigned to'}
                                             </span> {activity.key_label}
                                         </p>
-                                        <p className="text-xs text-gray-400 mt-0.5">
+                                        <p className="text-xs text-secondary mt-0.5">
                                             {new Date(activity.date).toLocaleString()}
                                         </p>
                                     </div>
                                 </div>
-                                <span className={`px-3 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider ${activity.state === 'picked_up' ? 'bg-green-50 text-green-700' : 'bg-blue-50 text-blue-700'
+                                <span className={`px-3 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider ${activity.state === 'picked_up'
+                                    ? 'bg-green-500/10 text-green-500'
+                                    : 'bg-blue-500/10 text-blue-500'
                                     }`}>
                                     {activity.state.replace('_', ' ')}
                                 </span>
                             </div>
                         ))}
                         {recentActivity.length === 0 && (
-                            <div className="p-12 text-center text-gray-400 font-medium">
+                            <div className="p-12 text-center text-secondary font-medium">
                                 No recent activity found.
                             </div>
                         )}
@@ -139,24 +141,24 @@ const HostDashboard = () => {
                 </div>
 
                 {/* Quick Actions */}
-                <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-8 space-y-6">
-                    <h3 className="text-lg font-bold text-gray-900">Quick Actions</h3>
+                <div className="bg-primary rounded-3xl border border-default shadow-sm p-8 space-y-6">
+                    <h3 className="text-lg font-bold text-primary">Quick Actions</h3>
                     <div className="space-y-3">
                         <Link to="/host/keys/new" className="block">
-                            <Button variant="bumble" className="w-full py-4 rounded-2xl font-bold shadow-md flex items-center justify-center gap-2">
+                            <Button variant="primary" className="w-full py-4 flex items-center justify-center gap-2">
                                 <PlusIcon className="h-5 w-5 stroke-[3]" />
                                 Register New Key
                             </Button>
                         </Link>
                         <Link to="/host/properties/new" className="block">
-                            <Button variant="outline" className="w-full py-4 rounded-2xl font-bold flex items-center justify-center gap-2">
+                            <Button variant="outline" className="w-full py-4 flex items-center justify-center gap-2">
                                 <HomeIcon className="h-5 w-5" />
                                 Add Property
                             </Button>
                         </Link>
                     </div>
-                    <div className="pt-6 border-t border-gray-50">
-                        <p className="text-xs text-gray-400 font-medium leading-relaxed">
+                    <div className="pt-6 border-t border-default">
+                        <p className="text-xs text-secondary font-medium leading-relaxed">
                             Need help? Check our <Link to="/help" className="text-bumble-yellow hover:underline">Help Center</Link> or contact support.
                         </p>
                     </div>

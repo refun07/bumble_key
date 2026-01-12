@@ -44,6 +44,19 @@ body {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     transition: background-color 0.3s ease, color 0.3s ease;
+    /* Prevent pull-to-refresh and overscroll glow on mobile */
+    overscroll-behavior-y: none;
+    /* Tap highlight color */
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* Safe Area Utilities */
+.pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+}
+
+.pt-safe {
+    padding-top: env(safe-area-inset-top);
 }
 
 /* Dark mode transitions */
@@ -155,6 +168,9 @@ a,
 input,
 select {
     transition: all 0.2s ease;
+    /* Disable text selection on interactive elements for app-like feel */
+    user-select: none;
+    -webkit-user-select: none;
 }
 
 /* Focus states */

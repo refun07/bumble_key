@@ -1,18 +1,50 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef, Fragment } from 'react';
+import { useTheme } from '../../store/theme';
 import { useNavigate } from 'react-router-dom';
+import { Dialog, Transition } from '@headlessui/react';
 import api from '../../services/api';
 import { useToast } from '../../store/toast';
 import Button from '../../components/common/Button';
 import Input from '../../components/common/Input';
+import { XMarkIcon, PlusIcon } from '@heroicons/react/24/outline';
 
+interface Property {
+    id: number;
+    title: string;
+    address: string;
+}
 
+interface Hive {
+    id: number;
+    name: string;
+    address: string;
+    photos?: string[];
+}
 
 const KeyRegistration = () => {
+    const { isDarkMode } = useTheme();
     const { showToast } = useToast();
     const navigate = useNavigate();
+    const fileInputRef = useRef<HTMLInputElement>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
     const [errors, setErrors] = useState<Record<string, string[]>>({});
+
+    const [properties, setProperties] = useState<Property[]>([]);
+    const [hives, setHives] = useState<Hive[]>([]);
+    const [selectedHive, setSelectedHive] = useState<Hive | null>(null);
+    const [fileName, setFileName] = useState('');
+
+    // Property Modal State
+    const [isPropertyModalOpen, setIsPropertyModalOpen] = useState(false);
+    const [isAddingProperty, setIsAddingProperty] = useState(false);
+    const [propertyErrors, setPropertyErrors] = useState<Record<string, string[]>>({});
+    const [newProperty, setNewProperty] = useState({
+        title: '',
+        address: '',
+        city: '',
+        country: 'UK',
+    });
 
     const [formData, setFormData] = useState({
         property_id: '',
@@ -22,6 +54,7 @@ const KeyRegistration = () => {
         description: '',
         notes: '',
         hive_id: '',
+        photo: '',
     });
 
     useEffect(() => {
@@ -31,15 +64,82 @@ const KeyRegistration = () => {
                     api.get('/hosts/properties'),
                     api.get('/hives')
                 ]);
-                console.log('Fetched data:', { props: propsRes.data.data, hives: hivesRes.data.data });
+                const fetchedProperties = propsRes.data.data || [];
+                const fetchedHives = hivesRes.data.data || [];
+
+                setProperties(fetchedProperties);
+                setHives(fetchedHives);
+
+                // Set initial property if available and not already set
+                if (fetchedProperties.length > 0 && !formData.property_id) {
+                    setFormData(prev => ({ ...prev, property_id: fetchedProperties[0].id.toString() }));
+                }
+
+                // Set initial hive if available and not already set
+                if (fetchedHives.length > 0 && !formData.hive_id) {
+                    setSelectedHive(fetchedHives[0]);
+                    setFormData(prev => ({ ...prev, hive_id: fetchedHives[0].id.toString() }));
+                }
             } catch (error) {
                 console.error('Failed to fetch data', error);
+                showToast('Failed to load properties or hives', 'error');
             } finally {
                 setIsLoading(false);
             }
         };
         fetchData();
     }, []);
+
+    const handleHiveChange = (hiveId: string) => {
+        const hive = hives.find(h => h.id.toString() === hiveId);
+        if (hive) {
+            setSelectedHive(hive);
+            setFormData({ ...formData, hive_id: hiveId });
+        } else {
+            setSelectedHive(null);
+            setFormData({ ...formData, hive_id: '' });
+        }
+    };
+
+    const handleAddProperty = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setIsAddingProperty(true);
+        setPropertyErrors({});
+        try {
+            const response = await api.post('/hosts/properties', newProperty);
+            const createdProperty = response.data.data;
+
+            showToast('Property created successfully', 'success');
+            setIsPropertyModalOpen(false);
+            setNewProperty({ title: '', address: '', city: '', country: 'UK' });
+
+            // Refresh properties and select the new one
+            const propsRes = await api.get('/hosts/properties');
+            const fetchedProperties = propsRes.data.data || [];
+            setProperties(fetchedProperties);
+            setFormData(prev => ({ ...prev, property_id: createdProperty.id.toString() }));
+        } catch (error: any) {
+            if (error.response?.status === 422) {
+                setPropertyErrors(error.response.data.errors);
+            } else {
+                showToast('Failed to create property', 'error');
+            }
+        } finally {
+            setIsAddingProperty(false);
+        }
+    };
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            setFileName(file.name);
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setFormData({ ...formData, photo: reader.result as string });
+            };
+            reader.readAsDataURL(file);
+        }
+    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -70,10 +170,10 @@ const KeyRegistration = () => {
     }
 
     return (
-        <div className="min-h-screen bg-[#F8F9FB] py-12 px-4 sm:px-6 lg:px-8">
-            <div className="max-w-xl mx-auto bg-white rounded-[40px] shadow-sm border border-gray-100 p-12">
+        <div className={`min-h-screen py-12 px-4 sm:px-6 lg:px-8 ${isDarkMode ? 'bg-zinc-950' : 'bg-[#F8F9FB]'}`}>
+            <div className={`max-w-xl mx-auto rounded-[40px] shadow-sm border p-12 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-gray-100'}`}>
                 <div className="text-left mb-10">
-                    <h2 className="text-3xl font-bold text-gray-900">
+                    <h2 className="text-3xl font-bold text-primary">
                         Register Your Key
                     </h2>
                 </div>
@@ -92,54 +192,104 @@ const KeyRegistration = () => {
 
                         <Input
                             label="Address"
-                            placeholder="Write the name"
+                            placeholder="Write the address"
                             className="rounded-xl border-gray-200"
                             value={formData.description}
                             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                        />
-
-                        <Input
-                            label="Property ID"
-                            placeholder="Write the name"
-                            className="rounded-xl border-gray-200"
-                            value={formData.property_id}
-                            onChange={(e) => setFormData({ ...formData, property_id: e.target.value })}
-                        />
-
-                        <Input
-                            label="Notes"
-                            placeholder="Write the name"
-                            className="rounded-xl border-gray-200"
-                            value={formData.notes}
-                            onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                            error={errors.description?.[0]}
                         />
 
                         <div>
-                            <label className="block text-sm font-bold text-gray-900 mb-2">Key Image</label>
+                            <div className="flex justify-between items-center mb-2">
+                                <label className="block text-sm font-bold text-primary">Property</label>
+                                <button
+                                    type="button"
+                                    onClick={() => setIsPropertyModalOpen(true)}
+                                    className="text-xs font-bold text-bumble-yellow hover:text-yellow-600 flex items-center gap-1"
+                                >
+                                    <PlusIcon className="h-3 w-3 stroke-[3]" />
+                                    Add New
+                                </button>
+                            </div>
+                            <select
+                                className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-bumble-yellow transition-all text-sm ${isDarkMode ? 'bg-zinc-800 border-zinc-700 text-white focus:bg-zinc-900' : 'bg-gray-50/50 border-gray-200 focus:bg-white'}`}
+                                value={formData.property_id}
+                                onChange={(e) => setFormData({ ...formData, property_id: e.target.value })}
+                                required
+                            >
+                                <option value="">Select a property</option>
+                                {properties.map(prop => (
+                                    <option key={prop.id} value={prop.id}>{prop.title}</option>
+                                ))}
+                            </select>
+                            {errors.property_id && <p className="mt-1 text-xs text-red-500">{errors.property_id[0]}</p>}
+                        </div>
+
+                        <Input
+                            label="Notes"
+                            placeholder="Write the notes"
+                            className="rounded-xl border-gray-200"
+                            value={formData.notes}
+                            onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                            error={errors.notes?.[0]}
+                        />
+
+                        <div>
+                            <label className="block text-sm font-bold text-primary mb-2">Key Image</label>
                             <div className="flex gap-2">
                                 <input
                                     type="text"
-                                    placeholder="Write the name"
-                                    className="flex-1 px-4 py-3 border border-gray-200 rounded-xl bg-gray-50/50 focus:outline-none focus:ring-2 focus:ring-bumble-yellow focus:bg-white transition-all text-sm"
+                                    placeholder="No image uploaded"
+                                    className={`flex-1 px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-bumble-yellow transition-all text-sm ${isDarkMode ? 'bg-zinc-800 border-zinc-700 text-white placeholder-zinc-500' : 'bg-gray-50/50 border-gray-200 placeholder-gray-400'}`}
+                                    value={fileName}
                                     readOnly
                                 />
-                                <Button type="button" variant="bumble" className="px-6 py-3">
+                                <input
+                                    type="file"
+                                    ref={fileInputRef}
+                                    onChange={handleFileChange}
+                                    className="hidden"
+                                    accept="image/*"
+                                />
+                                <Button
+                                    type="button"
+                                    variant="bumble"
+                                    className="px-6 py-3"
+                                    onClick={() => fileInputRef.current?.click()}
+                                >
                                     Upload
                                 </Button>
                             </div>
                         </div>
 
                         <div>
-                            <label className="block text-sm font-bold text-gray-900 mb-2">BumbleHive</label>
-                            <div className="bg-white border border-gray-100 rounded-2xl p-4 flex items-center gap-4 shadow-sm">
-                                <div className="w-20 h-20 rounded-xl overflow-hidden flex-shrink-0">
-                                    <img src="/bumblehive_preview.png" alt="BumbleHive" className="w-full h-full object-cover" />
+                            <label className="block text-sm font-bold text-primary mb-2">BumbleHive</label>
+                            <select
+                                className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-bumble-yellow transition-all text-sm mb-4 ${isDarkMode ? 'bg-zinc-800 border-zinc-700 text-white focus:bg-zinc-900' : 'bg-gray-50/50 border-gray-200 focus:bg-white'}`}
+                                value={formData.hive_id}
+                                onChange={(e) => handleHiveChange(e.target.value)}
+                            >
+                                <option value="">Select a BumbleHive (Optional)</option>
+                                {hives.map(hive => (
+                                    <option key={hive.id} value={hive.id}>{hive.name}</option>
+                                ))}
+                            </select>
+
+                            {selectedHive && (
+                                <div className={`border rounded-2xl p-4 flex items-center gap-4 shadow-sm ${isDarkMode ? 'bg-zinc-800/50 border-zinc-700' : 'bg-white border-gray-100'}`}>
+                                    <div className="w-20 h-20 rounded-xl overflow-hidden flex-shrink-0">
+                                        <img
+                                            src={selectedHive.photos?.[0] || "/bumblehive_preview.png"}
+                                            alt={selectedHive.name}
+                                            className="w-full h-full object-cover"
+                                        />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <h4 className="text-sm font-bold text-primary truncate">{selectedHive.name}</h4>
+                                        <p className="text-[10px] text-secondary mt-1 leading-relaxed">{selectedHive.address}</p>
+                                    </div>
                                 </div>
-                                <div className="flex-1 min-w-0">
-                                    <h4 className="text-sm font-bold text-gray-900 truncate">Embakment - Ap Food Express</h4>
-                                    <p className="text-[10px] text-gray-500 mt-1 leading-relaxed">21-22 Embankment Pl, London WC2N 6NN, UK</p>
-                                </div>
-                            </div>
+                            )}
                         </div>
                     </div>
 
@@ -155,6 +305,110 @@ const KeyRegistration = () => {
                     </div>
                 </form>
             </div>
+
+            {/* Add Property Modal */}
+            <Transition.Root show={isPropertyModalOpen} as={Fragment}>
+                <Dialog as="div" className="relative z-50" onClose={setIsPropertyModalOpen}>
+                    <Transition.Child
+                        as={Fragment}
+                        enter="ease-out duration-300"
+                        enterFrom="opacity-0"
+                        enterTo="opacity-100"
+                        leave="ease-in duration-200"
+                        leaveFrom="opacity-100"
+                        leaveTo="opacity-0"
+                    >
+                        <div className={`fixed inset-0 backdrop-blur-sm transition-opacity ${isDarkMode ? 'bg-zinc-950/80' : 'bg-slate-900/60'}`} />
+                    </Transition.Child>
+
+                    <div className="fixed inset-0 z-10 overflow-y-auto">
+                        <div className="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+                            <Transition.Child
+                                as={Fragment}
+                                enter="ease-out duration-300"
+                                enterFrom="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                                enterTo="opacity-100 translate-y-0 sm:scale-100"
+                                leave="ease-in duration-200"
+                                leaveFrom="opacity-100 translate-y-0 sm:scale-100"
+                                leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                            >
+                                <Dialog.Panel className={`relative transform overflow-hidden rounded-2xl px-4 pb-4 pt-5 text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-lg sm:p-10 ${isDarkMode ? 'bg-zinc-900' : 'bg-white'}`}>
+                                    <div className="absolute right-0 top-0 hidden pr-6 pt-6 sm:block">
+                                        <button
+                                            type="button"
+                                            className={`rounded-full p-2 focus:outline-none transition-all ${isDarkMode ? 'bg-zinc-800 text-zinc-400 hover:text-white hover:bg-zinc-700' : 'bg-gray-100 text-gray-400 hover:text-gray-500 hover:bg-gray-200'}`}
+                                            onClick={() => setIsPropertyModalOpen(false)}
+                                        >
+                                            <XMarkIcon className="h-6 w-6" aria-hidden="true" />
+                                        </button>
+                                    </div>
+                                    <div className="sm:flex sm:items-start">
+                                        <div className="mt-3 text-center sm:ml-4 sm:mt-0 sm:text-left w-full">
+                                            <Dialog.Title as="h3" className="text-2xl font-bold leading-6 text-primary">
+                                                Add New Property
+                                            </Dialog.Title>
+                                            <form onSubmit={handleAddProperty} className="mt-8 space-y-5">
+                                                <Input
+                                                    label="Property Title"
+                                                    placeholder="e.g. My Apartment"
+                                                    value={newProperty.title}
+                                                    onChange={(e) => setNewProperty({ ...newProperty, title: e.target.value })}
+                                                    error={propertyErrors.title?.[0]}
+                                                    required
+                                                />
+                                                <Input
+                                                    label="Address"
+                                                    placeholder="Full street address"
+                                                    value={newProperty.address}
+                                                    onChange={(e) => setNewProperty({ ...newProperty, address: e.target.value })}
+                                                    error={propertyErrors.address?.[0]}
+                                                    required
+                                                />
+                                                <div className="grid grid-cols-2 gap-4">
+                                                    <Input
+                                                        label="City"
+                                                        placeholder="e.g. London"
+                                                        value={newProperty.city}
+                                                        onChange={(e) => setNewProperty({ ...newProperty, city: e.target.value })}
+                                                        error={propertyErrors.city?.[0]}
+                                                        required
+                                                    />
+                                                    <Input
+                                                        label="Country"
+                                                        placeholder="e.g. UK"
+                                                        value={newProperty.country}
+                                                        onChange={(e) => setNewProperty({ ...newProperty, country: e.target.value })}
+                                                        error={propertyErrors.country?.[0]}
+                                                        required
+                                                    />
+                                                </div>
+                                                <div className="pt-6 flex gap-4">
+                                                    <Button
+                                                        type="button"
+                                                        variant="outline"
+                                                        className="flex-1 py-3 rounded-xl font-bold"
+                                                        onClick={() => setIsPropertyModalOpen(false)}
+                                                    >
+                                                        Cancel
+                                                    </Button>
+                                                    <Button
+                                                        type="submit"
+                                                        variant="bumble"
+                                                        className="flex-1 py-3"
+                                                        isLoading={isAddingProperty}
+                                                    >
+                                                        Create Property
+                                                    </Button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </Dialog.Panel>
+                            </Transition.Child>
+                        </div>
+                    </div>
+                </Dialog>
+            </Transition.Root>
         </div>
     );
 };

@@ -44,7 +44,7 @@ const GuestPickupView = () => {
                     <div className="text-red-500 text-5xl mb-4">!</div>
                     <h2 className="text-xl font-bold text-gray-900 mb-2">Link Error</h2>
                     <p className="text-gray-500 mb-6">{error}</p>
-                    <Button variant="bumble" className="w-full py-3 rounded-xl font-bold" onClick={() => window.location.reload()}>
+                    <Button variant="primary" className="w-full py-3" onClick={() => window.location.reload()}>
                         Try Again
                     </Button>
                 </div>
@@ -58,7 +58,7 @@ const GuestPickupView = () => {
                 <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-12 text-center">
                     <h2 className="text-xl font-bold text-gray-900 leading-relaxed">
                         {data.host_name || 'Melbourne Booker'} have shared this link with you<br />
-                        Key is ready for <span className="text-bumble-yellow">pickup</span>
+                        Key is ready for <span className="text-gray-900">pickup</span>
                     </h2>
                 </div>
 
@@ -76,6 +76,11 @@ const GuestPickupView = () => {
                             <div className="flex flex-col md:flex-row">
                                 <div className="md:w-1/2 h-64 md:h-auto bg-gray-100 relative">
                                     <img src="/bumblehive_preview.png" alt={data.hive?.name} className="w-full h-full object-cover" />
+                                    <div className="absolute top-4 right-4 bg-white/80 backdrop-blur-sm p-1.5 rounded-lg shadow-sm">
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+                                        </svg>
+                                    </div>
                                 </div>
                                 <div className="md:w-1/2 p-8 space-y-4">
                                     <div>
@@ -84,14 +89,15 @@ const GuestPickupView = () => {
                                     </div>
 
                                     <div>
-                                        <h5 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Opening Hours</h5>
+                                        <h5 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">OPENING HOURS</h5>
                                         <div className="space-y-0.5">
                                             <p className="text-xs text-gray-600 font-medium">Mon - Sat: 08:00 - 23:00</p>
                                             <p className="text-xs text-gray-600 font-medium">Sun: 08:00 - 22:30</p>
+                                            <p className="text-xs text-gray-600 font-medium">25/12/2025: 9am - 9pm 26/12/2025: 9am - 9pm</p>
                                         </div>
                                     </div>
 
-                                    <Button variant="outline" className="w-full py-2.5 rounded-lg font-bold bg-black text-white border-none text-xs">
+                                    <Button variant="primary" className="w-full py-2.5 text-xs">
                                         Get Directions on Map
                                     </Button>
                                 </div>
@@ -108,8 +114,8 @@ const GuestPickupView = () => {
                             <h3 className="text-sm font-bold text-gray-900">Share the pickup code with the store owner.</h3>
                         </div>
 
-                        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8 flex items-center justify-center">
-                            <div className="border-2 border-gray-100 rounded-2xl px-12 py-6 text-6xl font-bold text-gray-900 tracking-tighter">
+                        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8 flex items-center justify-center">
+                            <div className="border border-gray-100 rounded-2xl px-16 py-8 text-6xl font-bold text-gray-900 tracking-tighter shadow-sm">
                                 {data.pickup_code || '12345'}
                             </div>
                         </div>

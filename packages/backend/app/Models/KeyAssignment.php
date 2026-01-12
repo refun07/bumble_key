@@ -11,6 +11,7 @@ class KeyAssignment extends Model
 
     protected $fillable = [
         'key_id',
+        'hive_id',
         'cell_id',
         'nfc_fob_id',
         'host_id',
@@ -41,6 +42,11 @@ class KeyAssignment extends Model
     public function key()
     {
         return $this->belongsTo(Key::class);
+    }
+
+    public function hive()
+    {
+        return $this->belongsTo(Hive::class);
     }
 
     public function cell()

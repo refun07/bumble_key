@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTheme } from '../../store/theme';
 import {
     Cog6ToothIcon,
     BellIcon,
@@ -34,6 +35,7 @@ const sections: SettingSection[] = [
 ];
 
 const AdminSettings = () => {
+    const { isDarkMode } = useTheme();
     const { user } = useAuth();
     const { showToast } = useToast();
     const [activeSection, setActiveSection] = useState('profile');
@@ -183,20 +185,20 @@ const AdminSettings = () => {
                 return (
                     <div className="space-y-6">
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">Application Name</label>
+                            <label className="block text-sm font-medium text-secondary mb-2">Application Name</label>
                             <input
                                 type="text"
                                 value={settings.appName}
                                 onChange={(e) => handleChange('appName', e.target.value)}
-                                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-bumble-yellow focus:border-transparent"
+                                className={`w-full px-4 py-3 rounded-xl border focus:ring-2 focus:ring-bumble-yellow focus:border-transparent transition-all bg-primary border-default text-primary`}
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">Timezone</label>
+                            <label className="block text-sm font-medium text-secondary mb-2">Timezone</label>
                             <select
                                 value={settings.timezone}
                                 onChange={(e) => handleChange('timezone', e.target.value)}
-                                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-bumble-yellow focus:border-transparent"
+                                className={`w-full px-4 py-3 rounded-xl border focus:ring-2 focus:ring-bumble-yellow focus:border-transparent transition-all bg-primary border-default text-primary`}
                             >
                                 <option value="Australia/Sydney">Australia/Sydney</option>
                                 <option value="Australia/Melbourne">Australia/Melbourne</option>
@@ -205,11 +207,11 @@ const AdminSettings = () => {
                             </select>
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">Currency</label>
+                            <label className="block text-sm font-medium text-secondary mb-2">Currency</label>
                             <select
                                 value={settings.currency}
                                 onChange={(e) => handleChange('currency', e.target.value)}
-                                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-bumble-yellow focus:border-transparent"
+                                className={`w-full px-4 py-3 rounded-xl border focus:ring-2 focus:ring-bumble-yellow focus:border-transparent transition-all bg-primary border-default text-primary`}
                             >
                                 <option value="AUD">AUD - Australian Dollar</option>
                                 <option value="USD">USD - US Dollar</option>
@@ -218,11 +220,11 @@ const AdminSettings = () => {
                             </select>
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">Date Format</label>
+                            <label className="block text-sm font-medium text-secondary mb-2">Date Format</label>
                             <select
                                 value={settings.dateFormat}
                                 onChange={(e) => handleChange('dateFormat', e.target.value)}
-                                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-bumble-yellow focus:border-transparent"
+                                className={`w-full px-4 py-3 rounded-xl border focus:ring-2 focus:ring-bumble-yellow focus:border-transparent transition-all bg-primary border-default text-primary`}
                             >
                                 <option value="DD/MM/YYYY">DD/MM/YYYY</option>
                                 <option value="MM/DD/YYYY">MM/DD/YYYY</option>
@@ -241,14 +243,14 @@ const AdminSettings = () => {
                             { key: 'pushNotifications', label: 'Push Notifications', desc: 'Browser push notifications' },
                             { key: 'marketingEmails', label: 'Marketing Emails', desc: 'Promotional emails and newsletters' },
                         ].map((item) => (
-                            <div key={item.key} className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
+                            <div key={item.key} className={`flex items-center justify-between p-4 rounded-xl transition-all ${isDarkMode ? 'bg-zinc-800/50' : 'bg-gray-50'}`}>
                                 <div>
-                                    <p className="font-medium text-gray-900">{item.label}</p>
-                                    <p className="text-sm text-gray-500">{item.desc}</p>
+                                    <p className="font-medium text-primary">{item.label}</p>
+                                    <p className="text-sm text-secondary">{item.desc}</p>
                                 </div>
                                 <button
                                     onClick={() => handleChange(item.key, !settings[item.key as keyof typeof settings])}
-                                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${settings[item.key as keyof typeof settings] ? 'bg-bumble-yellow' : 'bg-gray-200'
+                                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${settings[item.key as keyof typeof settings] ? 'bg-bumble-yellow' : (isDarkMode ? 'bg-zinc-700' : 'bg-gray-200')
                                         }`}
                                 >
                                     <span
@@ -264,14 +266,14 @@ const AdminSettings = () => {
             case 'security':
                 return (
                     <div className="space-y-6">
-                        <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
+                        <div className={`flex items-center justify-between p-4 rounded-xl transition-all ${isDarkMode ? 'bg-zinc-800/50' : 'bg-gray-50'}`}>
                             <div>
-                                <p className="font-medium text-gray-900">Two-Factor Authentication</p>
-                                <p className="text-sm text-gray-500">Add an extra layer of security</p>
+                                <p className="font-medium text-primary">Two-Factor Authentication</p>
+                                <p className="text-sm text-secondary">Add an extra layer of security</p>
                             </div>
                             <button
                                 onClick={() => handleChange('twoFactorEnabled', !settings.twoFactorEnabled)}
-                                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${settings.twoFactorEnabled ? 'bg-bumble-yellow' : 'bg-gray-200'
+                                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${settings.twoFactorEnabled ? 'bg-bumble-yellow' : (isDarkMode ? 'bg-zinc-700' : 'bg-gray-200')
                                     }`}
                             >
                                 <span
@@ -281,22 +283,22 @@ const AdminSettings = () => {
                             </button>
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">Session Timeout (minutes)</label>
+                            <label className="block text-sm font-medium text-secondary mb-2">Session Timeout (minutes)</label>
                             <input
                                 type="number"
                                 value={settings.sessionTimeout}
                                 onChange={(e) => handleChange('sessionTimeout', parseInt(e.target.value))}
-                                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-bumble-yellow focus:border-transparent"
+                                className={`w-full px-4 py-3 rounded-xl border focus:ring-2 focus:ring-bumble-yellow focus:border-transparent transition-all bg-primary border-default text-primary`}
                             />
                         </div>
-                        <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
+                        <div className={`flex items-center justify-between p-4 rounded-xl transition-all ${isDarkMode ? 'bg-zinc-800/50' : 'bg-gray-50'}`}>
                             <div>
-                                <p className="font-medium text-gray-900">IP Whitelisting</p>
-                                <p className="text-sm text-gray-500">Restrict access to specific IPs</p>
+                                <p className="font-medium text-primary">IP Whitelisting</p>
+                                <p className="text-sm text-secondary">Restrict access to specific IPs</p>
                             </div>
                             <button
                                 onClick={() => handleChange('ipWhitelisting', !settings.ipWhitelisting)}
-                                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${settings.ipWhitelisting ? 'bg-bumble-yellow' : 'bg-gray-200'
+                                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${settings.ipWhitelisting ? 'bg-bumble-yellow' : (isDarkMode ? 'bg-zinc-700' : 'bg-gray-200')
                                     }`}
                             >
                                 <span
@@ -312,64 +314,64 @@ const AdminSettings = () => {
                 return (
                     <div className="space-y-6 animate-fade-in-up">
                         <div>
-                            <h3 className="text-lg font-bold text-gray-900">Profile Settings</h3>
-                            <p className="text-sm text-gray-500">Update your personal information and password.</p>
+                            <h3 className="text-lg font-bold text-primary">Profile Settings</h3>
+                            <p className="text-sm text-secondary">Update your personal information and password.</p>
                         </div>
 
                         <form onSubmit={handleUpdateProfile} className="space-y-6 max-w-2xl">
                             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                                 <div className="col-span-2 sm:col-span-1">
-                                    <label className="block text-sm font-bold text-gray-700 mb-2">Full Name</label>
+                                    <label className="block text-sm font-bold text-secondary mb-2">Full Name</label>
                                     <input
                                         type="text"
                                         value={profileData.name}
                                         onChange={(e) => setProfileData({ ...profileData, name: e.target.value })}
-                                        className="w-full rounded-xl border-gray-200 focus:border-bumble-yellow focus:ring-bumble-yellow/20 transition-all"
+                                        className={`w-full rounded-xl border transition-all focus:border-bumble-yellow focus:ring-bumble-yellow/20 bg-primary border-default text-primary`}
                                     />
                                 </div>
 
                                 <div className="col-span-2 sm:col-span-1">
-                                    <label className="block text-sm font-bold text-gray-700 mb-2">Email Address</label>
+                                    <label className="block text-sm font-bold text-secondary mb-2">Email Address</label>
                                     <input
                                         type="email"
                                         value={profileData.email}
                                         onChange={(e) => setProfileData({ ...profileData, email: e.target.value })}
-                                        className="w-full rounded-xl border-gray-200 focus:border-bumble-yellow focus:ring-bumble-yellow/20 transition-all"
+                                        className={`w-full rounded-xl border transition-all focus:border-bumble-yellow focus:ring-bumble-yellow/20 bg-primary border-default text-primary`}
                                     />
                                 </div>
 
                                 <div className="col-span-2">
-                                    <div className="border-t border-gray-100 my-4"></div>
-                                    <h4 className="text-sm font-bold text-gray-900 mb-4">Change Password</h4>
+                                    <div className={`border-t my-4 ${isDarkMode ? 'border-zinc-800' : 'border-gray-100'}`}></div>
+                                    <h4 className="text-sm font-bold text-primary mb-4">Change Password</h4>
                                 </div>
 
                                 <div className="col-span-2">
-                                    <label className="block text-sm font-bold text-gray-700 mb-2">Current Password</label>
+                                    <label className="block text-sm font-bold text-secondary mb-2">Current Password</label>
                                     <input
                                         type="password"
                                         value={profileData.currentPassword}
                                         onChange={(e) => setProfileData({ ...profileData, currentPassword: e.target.value })}
-                                        className="w-full rounded-xl border-gray-200 focus:border-bumble-yellow focus:ring-bumble-yellow/20 transition-all"
+                                        className={`w-full rounded-xl border transition-all focus:border-bumble-yellow focus:ring-bumble-yellow/20 bg-primary border-default text-primary`}
                                     />
                                 </div>
 
                                 <div className="col-span-2 sm:col-span-1">
-                                    <label className="block text-sm font-bold text-gray-700 mb-2">New Password</label>
+                                    <label className="block text-sm font-bold text-secondary mb-2">New Password</label>
                                     <input
                                         type="password"
                                         value={profileData.newPassword}
                                         onChange={(e) => setProfileData({ ...profileData, newPassword: e.target.value })}
-                                        className="w-full rounded-xl border-gray-200 focus:border-bumble-yellow focus:ring-bumble-yellow/20 transition-all"
+                                        className={`w-full rounded-xl border transition-all focus:border-bumble-yellow focus:ring-bumble-yellow/20 bg-primary border-default text-primary`}
                                     />
                                 </div>
 
                                 <div className="col-span-2 sm:col-span-1">
-                                    <label className="block text-sm font-bold text-gray-700 mb-2">Confirm New Password</label>
+                                    <label className="block text-sm font-bold text-secondary mb-2">Confirm New Password</label>
                                     <input
                                         type="password"
                                         value={profileData.confirmPassword}
                                         onChange={(e) => setProfileData({ ...profileData, confirmPassword: e.target.value })}
-                                        className="w-full rounded-xl border-gray-200 focus:border-bumble-yellow focus:ring-bumble-yellow/20 transition-all"
+                                        className={`w-full rounded-xl border transition-all focus:border-bumble-yellow focus:ring-bumble-yellow/20 bg-primary border-default text-primary`}
                                     />
                                 </div>
                             </div>
@@ -393,59 +395,59 @@ const AdminSettings = () => {
                     <div className="space-y-8">
                         {/* Pricing Section */}
                         <div>
-                            <h3 className="text-lg font-semibold text-gray-900 mb-4">Subscription Pricing</h3>
+                            <h3 className="text-lg font-semibold text-primary mb-4">Subscription Pricing</h3>
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                <div className="p-4 border border-gray-200 rounded-xl">
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">Pay As You Go</label>
+                                <div className={`p-4 border rounded-xl transition-all bg-primary border-default`}>
+                                    <label className="block text-sm font-medium text-secondary mb-2">Pay As You Go</label>
                                     <div className="relative">
-                                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">$</span>
+                                        <span className={`absolute left-4 top-1/2 -translate-y-1/2 text-secondary`}>$</span>
                                         <input
                                             type="number"
                                             step="0.01"
                                             value={settings.pay_as_you_go_price}
                                             onChange={(e) => handleChange('pay_as_you_go_price', parseFloat(e.target.value))}
-                                            className="w-full pl-8 pr-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-bumble-yellow focus:border-transparent"
+                                            className={`w-full pl-8 pr-4 py-3 rounded-xl border focus:ring-2 focus:ring-bumble-yellow focus:border-transparent transition-all bg-primary border-default text-primary`}
                                         />
                                     </div>
-                                    <p className="text-xs text-gray-500 mt-2">Per key exchange</p>
+                                    <p className="text-xs text-secondary mt-2">Per key exchange</p>
                                 </div>
-                                <div className="p-4 border border-gray-200 rounded-xl">
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">Monthly Plan</label>
+                                <div className={`p-4 border rounded-xl transition-all bg-primary border-default`}>
+                                    <label className="block text-sm font-medium text-secondary mb-2">Monthly Plan</label>
                                     <div className="relative">
-                                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">$</span>
+                                        <span className={`absolute left-4 top-1/2 -translate-y-1/2 text-secondary`}>$</span>
                                         <input
                                             type="number"
                                             step="0.01"
                                             value={settings.monthly_price}
                                             onChange={(e) => handleChange('monthly_price', parseFloat(e.target.value))}
-                                            className="w-full pl-8 pr-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-bumble-yellow focus:border-transparent"
+                                            className={`w-full pl-8 pr-4 py-3 rounded-xl border focus:ring-2 focus:ring-bumble-yellow focus:border-transparent transition-all bg-primary border-default text-primary`}
                                         />
                                     </div>
-                                    <p className="text-xs text-gray-500 mt-2">Per month</p>
+                                    <p className="text-xs text-secondary mt-2">Per month</p>
                                 </div>
-                                <div className="p-4 border border-gray-200 rounded-xl">
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">Yearly Plan</label>
+                                <div className={`p-4 border rounded-xl transition-all bg-primary border-default`}>
+                                    <label className="block text-sm font-medium text-secondary mb-2">Yearly Plan</label>
                                     <div className="relative">
-                                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">$</span>
+                                        <span className={`absolute left-4 top-1/2 -translate-y-1/2 text-secondary`}>$</span>
                                         <input
                                             type="number"
                                             step="0.01"
                                             value={settings.yearly_price}
                                             onChange={(e) => handleChange('yearly_price', parseFloat(e.target.value))}
-                                            className="w-full pl-8 pr-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-bumble-yellow focus:border-transparent"
+                                            className={`w-full pl-8 pr-4 py-3 rounded-xl border focus:ring-2 focus:ring-bumble-yellow focus:border-transparent transition-all bg-primary border-default text-primary`}
                                         />
                                     </div>
-                                    <p className="text-xs text-gray-500 mt-2">Per year</p>
+                                    <p className="text-xs text-secondary mt-2">Per year</p>
                                 </div>
                             </div>
                         </div>
 
                         {/* Discount Section */}
                         <div>
-                            <h3 className="text-lg font-semibold text-gray-900 mb-4">Discounts</h3>
+                            <h3 className="text-lg font-semibold text-primary mb-4">Discounts</h3>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div className="p-4 bg-green-50 border border-green-200 rounded-xl">
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">Monthly Discount (%)</label>
+                                <div className={`p-4 border rounded-xl transition-all ${isDarkMode ? 'bg-green-500/10 border-green-500/20' : 'bg-green-50 border-green-200'}`}>
+                                    <label className="block text-sm font-medium text-secondary mb-2">Monthly Discount (%)</label>
                                     <div className="relative">
                                         <input
                                             type="number"
@@ -453,19 +455,19 @@ const AdminSettings = () => {
                                             max="100"
                                             value={settings.monthly_discount}
                                             onChange={(e) => handleChange('monthly_discount', parseFloat(e.target.value) || 0)}
-                                            className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                                            className={`w-full px-4 py-3 rounded-xl border focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all bg-primary border-default text-primary`}
                                         />
-                                        <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500">%</span>
+                                        <span className={`absolute right-4 top-1/2 -translate-y-1/2 text-secondary`}>%</span>
                                     </div>
                                     {settings.monthly_discount > 0 && (
-                                        <p className="text-sm text-green-700 mt-2">
+                                        <p className={`text-sm mt-2 ${isDarkMode ? 'text-green-400' : 'text-green-700'}`}>
                                             Final price: <span className="font-bold">${monthlyDiscounted.toFixed(2)}</span>
-                                            <span className="line-through text-gray-400 ml-2">${settings.monthly_price}</span>
+                                            <span className={`line-through ml-2 text-secondary`}>${settings.monthly_price}</span>
                                         </p>
                                     )}
                                 </div>
-                                <div className="p-4 bg-green-50 border border-green-200 rounded-xl">
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">Yearly Discount (%)</label>
+                                <div className={`p-4 border rounded-xl transition-all ${isDarkMode ? 'bg-green-500/10 border-green-500/20' : 'bg-green-50 border-green-200'}`}>
+                                    <label className="block text-sm font-medium text-secondary mb-2">Yearly Discount (%)</label>
                                     <div className="relative">
                                         <input
                                             type="number"
@@ -473,14 +475,14 @@ const AdminSettings = () => {
                                             max="100"
                                             value={settings.yearly_discount}
                                             onChange={(e) => handleChange('yearly_discount', parseFloat(e.target.value) || 0)}
-                                            className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                                            className={`w-full px-4 py-3 rounded-xl border focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all bg-primary border-default text-primary`}
                                         />
-                                        <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500">%</span>
+                                        <span className={`absolute right-4 top-1/2 -translate-y-1/2 text-secondary`}>%</span>
                                     </div>
                                     {settings.yearly_discount > 0 && (
-                                        <p className="text-sm text-green-700 mt-2">
+                                        <p className={`text-sm mt-2 ${isDarkMode ? 'text-green-400' : 'text-green-700'}`}>
                                             Final price: <span className="font-bold">${yearlyDiscounted.toFixed(2)}</span>
-                                            <span className="line-through text-gray-400 ml-2">${settings.yearly_price}</span>
+                                            <span className={`line-through ml-2 text-secondary`}>${settings.yearly_price}</span>
                                         </p>
                                     )}
                                 </div>
@@ -490,20 +492,20 @@ const AdminSettings = () => {
                         {/* Trial & Currency */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">Trial Period (days)</label>
+                                <label className="block text-sm font-medium text-secondary mb-2">Trial Period (days)</label>
                                 <input
                                     type="number"
                                     value={settings.trial_days}
                                     onChange={(e) => handleChange('trial_days', parseInt(e.target.value))}
-                                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-bumble-yellow focus:border-transparent"
+                                    className={`w-full px-4 py-3 rounded-xl border focus:ring-2 focus:ring-bumble-yellow focus:border-transparent transition-all bg-primary border-default text-primary`}
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">Currency</label>
+                                <label className="block text-sm font-medium text-secondary mb-2">Currency</label>
                                 <select
                                     value={settings.currency}
                                     onChange={(e) => handleChange('currency', e.target.value)}
-                                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-bumble-yellow focus:border-transparent"
+                                    className={`w-full px-4 py-3 rounded-xl border focus:ring-2 focus:ring-bumble-yellow focus:border-transparent transition-all bg-primary border-default text-primary`}
                                 >
                                     <option value="AUD">AUD - Australian Dollar</option>
                                     <option value="USD">USD - US Dollar</option>
@@ -514,26 +516,26 @@ const AdminSettings = () => {
                         </div>
 
                         {/* Preview */}
-                        <div className="p-4 bg-gray-50 rounded-xl">
-                            <h4 className="text-sm font-medium text-gray-700 mb-3">Pricing Preview (as shown to customers)</h4>
+                        <div className={`p-4 rounded-xl transition-all ${isDarkMode ? 'bg-zinc-800/50' : 'bg-gray-50'}`}>
+                            <h4 className="text-sm font-medium text-secondary mb-3">Pricing Preview (as shown to customers)</h4>
                             <div className="grid grid-cols-3 gap-4 text-center">
-                                <div className="bg-white p-4 rounded-lg border">
-                                    <p className="text-xs text-gray-500 uppercase">Pay As You Go</p>
-                                    <p className="text-2xl font-bold text-gray-900">${settings.pay_as_you_go_price}</p>
-                                    <p className="text-xs text-gray-400">per exchange</p>
+                                <div className={`p-4 rounded-lg border transition-all ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-gray-200'}`}>
+                                    <p className="text-xs text-secondary uppercase">Pay As You Go</p>
+                                    <p className="text-2xl font-bold text-primary">${settings.pay_as_you_go_price}</p>
+                                    <p className="text-xs text-secondary">per exchange</p>
                                 </div>
-                                <div className="bg-white p-4 rounded-lg border">
-                                    <p className="text-xs text-gray-500 uppercase">Monthly</p>
-                                    <p className="text-2xl font-bold text-gray-900">
+                                <div className={`p-4 rounded-lg border transition-all ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-gray-200'}`}>
+                                    <p className="text-xs text-secondary uppercase">Monthly</p>
+                                    <p className="text-2xl font-bold text-primary">
                                         ${settings.monthly_discount > 0 ? monthlyDiscounted.toFixed(0) : settings.monthly_price}
                                     </p>
                                     {settings.monthly_discount > 0 && (
                                         <p className="text-xs text-green-600">{settings.monthly_discount}% off</p>
                                     )}
                                 </div>
-                                <div className="bg-white p-4 rounded-lg border border-bumble-yellow">
-                                    <p className="text-xs text-gray-500 uppercase">Yearly</p>
-                                    <p className="text-2xl font-bold text-gray-900">
+                                <div className={`p-4 rounded-lg border transition-all bg-primary ${isDarkMode ? 'border-bumble-yellow/50' : 'border-bumble-yellow'}`}>
+                                    <p className="text-xs text-secondary uppercase">Yearly</p>
+                                    <p className="text-2xl font-bold text-primary">
                                         ${settings.yearly_discount > 0 ? yearlyDiscounted.toFixed(0) : settings.yearly_price}
                                     </p>
                                     {settings.yearly_discount > 0 && (
@@ -549,34 +551,34 @@ const AdminSettings = () => {
                 return (
                     <div className="space-y-6">
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">Primary Color</label>
+                            <label className="block text-sm font-medium text-secondary mb-2">Primary Color</label>
                             <div className="flex items-center gap-4">
                                 <input
                                     type="color"
                                     value={settings.primaryColor}
                                     onChange={(e) => handleChange('primaryColor', e.target.value)}
-                                    className="w-16 h-16 rounded-xl border border-gray-200 cursor-pointer"
+                                    className={`w-16 h-16 rounded-xl border cursor-pointer ${isDarkMode ? 'bg-zinc-800 border-zinc-700' : 'bg-white border-gray-200'}`}
                                 />
                                 <input
                                     type="text"
                                     value={settings.primaryColor}
                                     onChange={(e) => handleChange('primaryColor', e.target.value)}
-                                    className="flex-1 px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-bumble-yellow focus:border-transparent"
+                                    className={`flex-1 px-4 py-3 rounded-xl border focus:ring-2 focus:ring-bumble-yellow focus:border-transparent transition-all bg-primary border-default text-primary`}
                                 />
                             </div>
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">Logo URL</label>
+                            <label className="block text-sm font-medium text-secondary mb-2">Logo URL</label>
                             <input
                                 type="url"
                                 value={settings.logoUrl}
                                 onChange={(e) => handleChange('logoUrl', e.target.value)}
                                 placeholder="https://example.com/logo.png"
-                                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-bumble-yellow focus:border-transparent"
+                                className={`w-full px-4 py-3 rounded-xl border focus:ring-2 focus:ring-bumble-yellow focus:border-transparent transition-all bg-primary border-default text-primary placeholder-secondary`}
                             />
                         </div>
-                        <div className="p-6 bg-gray-50 rounded-xl">
-                            <p className="text-sm text-gray-500 mb-4">Preview</p>
+                        <div className={`p-6 rounded-xl transition-all ${isDarkMode ? 'bg-zinc-800/50' : 'bg-gray-50'}`}>
+                            <p className="text-sm text-secondary mb-4">Preview</p>
                             <div className="flex items-center gap-4">
                                 <div
                                     className="w-12 h-12 rounded-xl flex items-center justify-center text-white font-bold text-xl"
@@ -584,7 +586,7 @@ const AdminSettings = () => {
                                 >
                                     B
                                 </div>
-                                <span className="text-2xl font-bold text-gray-900">{settings.appName}</span>
+                                <span className="text-2xl font-bold text-primary">{settings.appName}</span>
                             </div>
                         </div>
                     </div>
@@ -599,17 +601,17 @@ const AdminSettings = () => {
                             { name: 'Stripe', status: 'connected', logo: '💳' },
                             { name: 'Twilio', status: 'disconnected', logo: '📱' },
                         ].map((integration) => (
-                            <div key={integration.name} className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
+                            <div key={integration.name} className={`flex items-center justify-between p-4 rounded-xl transition-all ${isDarkMode ? 'bg-zinc-800/50' : 'bg-gray-50'}`}>
                                 <div className="flex items-center gap-4">
                                     <span className="text-2xl">{integration.logo}</span>
                                     <div>
-                                        <p className="font-medium text-gray-900">{integration.name}</p>
-                                        <p className={`text-sm ${integration.status === 'connected' ? 'text-green-600' : 'text-gray-500'}`}>
+                                        <p className="font-medium text-primary">{integration.name}</p>
+                                        <p className={`text-sm ${integration.status === 'connected' ? 'text-green-600' : 'text-secondary'}`}>
                                             {integration.status === 'connected' ? 'Connected' : 'Not connected'}
                                         </p>
                                     </div>
                                 </div>
-                                <Button variant={integration.status === 'connected' ? 'outline' : 'bumble'}>
+                                <Button variant={integration.status === 'connected' ? 'outline' : 'bumble'} className="whitespace-nowrap">
                                     {integration.status === 'connected' ? 'Disconnect' : 'Connect'}
                                 </Button>
                             </div>
@@ -620,31 +622,31 @@ const AdminSettings = () => {
             case 'api':
                 return (
                     <div className="space-y-6">
-                        <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-xl">
-                            <p className="text-sm text-yellow-800">
+                        <div className={`p-4 border rounded-xl transition-all ${isDarkMode ? 'bg-yellow-500/10 border-yellow-500/20' : 'bg-yellow-50 border-yellow-200'}`}>
+                            <p className={`text-sm ${isDarkMode ? 'text-yellow-500' : 'text-yellow-800'}`}>
                                 <strong>Warning:</strong> Keep your API keys secret. Never share them publicly.
                             </p>
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">Public API Key</label>
+                            <label className="block text-sm font-medium text-secondary mb-2">Public API Key</label>
                             <div className="flex gap-2">
                                 <input
                                     type="text"
                                     value="pk_live_xxxxxxxxxxxxxxxx"
                                     readOnly
-                                    className="flex-1 px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 font-mono text-sm"
+                                    className={`flex-1 px-4 py-3 rounded-xl border font-mono text-sm transition-all bg-secondary border-default text-secondary`}
                                 />
                                 <Button variant="outline">Copy</Button>
                             </div>
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">Secret API Key</label>
+                            <label className="block text-sm font-medium text-secondary mb-2">Secret API Key</label>
                             <div className="flex gap-2">
                                 <input
                                     type="password"
                                     value="sk_live_xxxxxxxxxxxxxxxx"
                                     readOnly
-                                    className="flex-1 px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 font-mono text-sm"
+                                    className={`flex-1 px-4 py-3 rounded-xl border font-mono text-sm transition-all bg-secondary border-default text-secondary`}
                                 />
                                 <Button variant="outline">Reveal</Button>
                                 <Button variant="outline">Regenerate</Button>
@@ -658,51 +660,51 @@ const AdminSettings = () => {
                     <div className="space-y-6">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">SMTP Host</label>
+                                <label className="block text-sm font-medium text-secondary mb-2">SMTP Host</label>
                                 <input
                                     type="text"
                                     value={settings.smtpHost}
                                     onChange={(e) => handleChange('smtpHost', e.target.value)}
                                     placeholder="smtp.example.com"
-                                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-bumble-yellow focus:border-transparent"
+                                    className={`w-full px-4 py-3 rounded-xl border focus:ring-2 focus:ring-bumble-yellow focus:border-transparent transition-all bg-primary border-default text-primary placeholder-secondary`}
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">SMTP Port</label>
+                                <label className="block text-sm font-medium text-secondary mb-2">SMTP Port</label>
                                 <input
                                     type="number"
                                     value={settings.smtpPort}
                                     onChange={(e) => handleChange('smtpPort', parseInt(e.target.value))}
-                                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-bumble-yellow focus:border-transparent"
+                                    className={`w-full px-4 py-3 rounded-xl border focus:ring-2 focus:ring-bumble-yellow focus:border-transparent transition-all bg-primary border-default text-primary`}
                                 />
                             </div>
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">SMTP Username</label>
+                            <label className="block text-sm font-medium text-secondary mb-2">SMTP Username</label>
                             <input
                                 type="text"
                                 value={settings.smtpUser}
                                 onChange={(e) => handleChange('smtpUser', e.target.value)}
-                                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-bumble-yellow focus:border-transparent"
+                                className={`w-full px-4 py-3 rounded-xl border focus:ring-2 focus:ring-bumble-yellow focus:border-transparent transition-all bg-primary border-default text-primary`}
                             />
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">From Email</label>
+                                <label className="block text-sm font-medium text-secondary mb-2">From Email</label>
                                 <input
                                     type="email"
                                     value={settings.fromEmail}
                                     onChange={(e) => handleChange('fromEmail', e.target.value)}
-                                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-bumble-yellow focus:border-transparent"
+                                    className={`w-full px-4 py-3 rounded-xl border focus:ring-2 focus:ring-bumble-yellow focus:border-transparent transition-all bg-primary border-default text-primary`}
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">From Name</label>
+                                <label className="block text-sm font-medium text-secondary mb-2">From Name</label>
                                 <input
                                     type="text"
                                     value={settings.fromName}
                                     onChange={(e) => handleChange('fromName', e.target.value)}
-                                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-bumble-yellow focus:border-transparent"
+                                    className={`w-full px-4 py-3 rounded-xl border focus:ring-2 focus:ring-bumble-yellow focus:border-transparent transition-all bg-primary border-default text-primary`}
                                 />
                             </div>
                         </div>
@@ -719,8 +721,8 @@ const AdminSettings = () => {
         <div className="space-y-6">
             {/* Header */}
             <div>
-                <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
-                <p className="text-gray-500">Manage your application settings and preferences.</p>
+                <h1 className="text-2xl font-bold text-primary">Settings</h1>
+                <p className="text-secondary">Manage your application settings and preferences.</p>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
@@ -733,7 +735,7 @@ const AdminSettings = () => {
                                 onClick={() => setActiveSection(section.id)}
                                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-all ${activeSection === section.id
                                     ? 'bg-bumble-yellow text-gray-900 font-medium'
-                                    : 'text-gray-600 hover:bg-gray-100'
+                                    : (isDarkMode ? 'text-zinc-400 hover:bg-zinc-800 hover:text-white' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900')
                                     }`}
                             >
                                 <section.icon className="w-5 h-5" />
@@ -745,12 +747,12 @@ const AdminSettings = () => {
 
                 {/* Content */}
                 <div className="lg:col-span-3">
-                    <div className="bg-white rounded-2xl border border-gray-100 p-6">
-                        <h2 className="text-xl font-bold text-gray-900 mb-6">
+                    <div className="bg-primary rounded-2xl border border-default p-6">
+                        <h2 className="text-xl font-bold text-primary mb-6">
                             {sections.find(s => s.id === activeSection)?.name}
                         </h2>
                         {renderSection()}
-                        <div className="mt-8 pt-6 border-t border-gray-100 flex justify-end">
+                        <div className={`mt-8 pt-6 border-t flex justify-end ${isDarkMode ? 'border-zinc-800' : 'border-gray-100'}`}>
                             <Button variant="bumble" onClick={handleSave} disabled={saving}>
                                 {saving ? 'Saving...' : 'Save Changes'}
                             </Button>

@@ -6,6 +6,7 @@ import Input from '../../components/common/Input';
 import { MagnifyingGlassIcon, PencilIcon, XMarkIcon, PowerIcon, PlusIcon, ArrowPathIcon, CheckIcon, MapPinIcon, PhotoIcon } from '@heroicons/react/24/outline';
 import { TableShimmer } from '../../components/common/Shimmer';
 import { useToast } from '../../store/toast';
+import { useTheme } from '../../store/theme';
 
 interface Hive {
     id: number;
@@ -32,6 +33,7 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 const BoxList = () => {
     const { showToast } = useToast();
+    const { isDarkMode } = useTheme();
     const [hives, setHives] = useState<Hive[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [search, setSearch] = useState('');
@@ -235,7 +237,7 @@ const BoxList = () => {
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center">
-                <h2 className="text-2xl font-bold text-gray-900">BumbleHive/Boxes</h2>
+                <h2 className="text-2xl font-bold text-primary">BumbleHive/Boxes</h2>
                 <Button
                     variant="bumble"
                     className="flex items-center gap-2 px-6 py-2.5"
@@ -250,74 +252,76 @@ const BoxList = () => {
             </div>
 
             {/* Filters Bar */}
-            <div className="flex flex-col md:flex-row gap-4 items-center bg-gray-50 p-4 rounded-lg border border-gray-200">
-                <div className="relative flex-1 w-full">
+            <div className="flex flex-col lg:flex-row gap-4 lg:gap-6 items-stretch lg:items-center bg-primary p-4 lg:p-6 rounded-2xl lg:rounded-[32px] border border-default shadow-sm">
+                <div className="relative flex-1">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                         <MagnifyingGlassIcon className="h-5 w-5 text-gray-400" />
                     </div>
                     <input
                         type="text"
-                        className="block w-full pl-10 pr-3 py-2 border border-blue-400 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                        className={`block w-full pl-10 pr-3 py-2.5 border rounded-xl leading-5 focus:outline-none focus:ring-2 focus:ring-bumble-yellow/20 focus:border-bumble-yellow sm:text-sm transition-all ${isDarkMode ? 'bg-zinc-800 border-zinc-700 text-white placeholder-zinc-500' : 'bg-white border-gray-200 text-gray-900 placeholder-gray-400'}`}
                         placeholder="Search BumbleHive"
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
                     />
                 </div>
 
-                <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium text-gray-700">Status</span>
-                    <select
-                        className="block w-40 pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md border"
-                        value={statusFilter}
-                        onChange={(e) => setStatusFilter(e.target.value)}
-                    >
-                        <option value="">All</option>
-                        <option value="assigned">Assigned</option>
-                        <option value="idle">Idle</option>
-                        <option value="disabled">Disabled</option>
-                    </select>
-                </div>
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
+                    <div className="flex items-center gap-3 flex-1 sm:flex-none">
+                        <span className="text-sm font-bold text-secondary whitespace-nowrap">Status</span>
+                        <select
+                            className={`block w-full sm:w-40 pl-3 pr-10 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-bumble-yellow/20 focus:border-bumble-yellow rounded-xl border transition-all ${isDarkMode ? 'bg-zinc-800 border-zinc-700 text-white' : 'bg-white border-gray-200 text-gray-900'}`}
+                            value={statusFilter}
+                            onChange={(e) => setStatusFilter(e.target.value)}
+                        >
+                            <option value="">All Status</option>
+                            <option value="assigned">Assigned</option>
+                            <option value="idle">Idle</option>
+                            <option value="disabled">Disabled</option>
+                        </select>
+                    </div>
 
-                <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium text-gray-700">Availability</span>
-                    <select
-                        className="block w-48 pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md border"
-                        value={availabilityFilter}
-                        onChange={(e) => setAvailabilityFilter(e.target.value)}
-                    >
-                        <option value="">Slots Available</option>
-                        <option value="available">Available</option>
-                        <option value="full">Full</option>
-                    </select>
-                </div>
+                    <div className="flex items-center gap-3 flex-1 sm:flex-none">
+                        <span className="text-sm font-bold text-secondary whitespace-nowrap">Slots</span>
+                        <select
+                            className={`block w-full sm:w-44 pl-3 pr-10 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-bumble-yellow/20 focus:border-bumble-yellow rounded-xl border transition-all ${isDarkMode ? 'bg-zinc-800 border-zinc-700 text-white' : 'bg-white border-gray-200 text-gray-900'}`}
+                            value={availabilityFilter}
+                            onChange={(e) => setAvailabilityFilter(e.target.value)}
+                        >
+                            <option value="">All Availability</option>
+                            <option value="available">Available</option>
+                            <option value="full">Full</option>
+                        </select>
+                    </div>
 
-                <Button
-                    variant="outline"
-                    onClick={resetFilters}
-                    className="flex items-center gap-2 border-gray-300 text-gray-700 hover:bg-gray-100 transition-all"
-                >
-                    <ArrowPathIcon className="h-4 w-4" />
-                    Reset Filters
-                </Button>
+                    <Button
+                        variant="outline"
+                        onClick={resetFilters}
+                        className={`flex items-center justify-center gap-2 border-default text-secondary transition-all rounded-xl px-6 py-2.5 font-bold ${isDarkMode ? 'hover:bg-zinc-800 hover:text-white' : 'hover:bg-gray-50 hover:text-gray-900'}`}
+                    >
+                        <ArrowPathIcon className="h-4 w-4" />
+                        Reset
+                    </Button>
+                </div>
             </div>
 
-            {/* Table Header */}
-            <div className="grid grid-cols-6 px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
+            {/* Table Header - Hidden on Mobile */}
+            <div className="hidden lg:grid grid-cols-6 px-8 py-3 text-xs font-bold text-secondary uppercase tracking-wider">
                 <div
-                    className="col-span-1 cursor-pointer hover:text-gray-700 flex items-center gap-1"
+                    className={`col-span-1 cursor-pointer flex items-center gap-1 ${isDarkMode ? 'hover:text-white' : 'hover:text-gray-700'}`}
                     onClick={() => toggleSort('name')}
                 >
                     Box Name {sortBy === 'name' && (sortOrder === 'asc' ? '↑' : '↓')}
                 </div>
                 <div
-                    className="col-span-1 cursor-pointer hover:text-gray-700 flex items-center gap-1"
+                    className={`col-span-1 cursor-pointer flex items-center gap-1 ${isDarkMode ? 'hover:text-white' : 'hover:text-gray-700'}`}
                     onClick={() => toggleSort('status')}
                 >
                     Status {sortBy === 'status' && (sortOrder === 'asc' ? '↑' : '↓')}
                 </div>
                 <div className="col-span-2">Assigned Partner</div>
                 <div
-                    className="col-span-1 text-right pr-12 cursor-pointer hover:text-gray-700 flex items-center justify-end gap-1"
+                    className={`col-span-1 text-right pr-12 cursor-pointer flex items-center justify-end gap-1 ${isDarkMode ? 'hover:text-white' : 'hover:text-gray-700'}`}
                     onClick={() => toggleSort('available_cells_count')}
                 >
                     Available Slots {sortBy === 'available_cells_count' && (sortOrder === 'asc' ? '↑' : '↓')}
@@ -330,55 +334,96 @@ const BoxList = () => {
                 {isLoading ? (
                     <TableShimmer rows={6} cols={5} />
                 ) : hives.length === 0 ? (
-                    <div className="text-center py-12 text-gray-500 bg-white rounded-lg border border-gray-200">
+                    <div className="text-center py-12 text-secondary bg-primary rounded-[32px] border border-default shadow-sm italic">
                         No boxes found matching your criteria.
                     </div>
                 ) : (
                     hives.map((hive) => (
-                        <div key={hive.id} className={`bg-white rounded-lg shadow-sm border border-gray-100 hover:shadow-md transition-shadow ${hive.status === 'disabled' ? 'opacity-60 grayscale' : ''}`}>
-                            <div className="grid grid-cols-6 items-center px-6 py-4">
-                                <div className="col-span-1 font-medium text-gray-900">
+                        <div key={hive.id} className={`bg-primary rounded-3xl lg:rounded-[32px] shadow-sm border border-default hover:border-bumble-yellow hover:shadow-md transition-all duration-200 overflow-hidden group ${hive.status === 'disabled' ? 'opacity-60 grayscale' : ''}`}>
+                            {/* Desktop Layout */}
+                            <div className="hidden lg:grid grid-cols-6 items-center px-8 py-6">
+                                <div className="col-span-1 font-bold text-primary">
                                     {hive.name}
                                 </div>
                                 <div className="col-span-1">
-                                    <span className={`text-sm ${hive.status === 'assigned' ? 'text-blue-600 font-semibold' : hive.status === 'disabled' ? 'text-red-500' : 'text-gray-400'}`}>
-                                        {hive.status.charAt(0).toUpperCase() + hive.status.slice(1)}
+                                    <span className={`text-xs font-bold px-3 py-1 rounded-full ${hive.status === 'assigned' ? 'bg-blue-500/10 text-blue-500' : hive.status === 'disabled' ? 'bg-red-500/10 text-red-500' : isDarkMode ? 'bg-zinc-800 text-zinc-400' : 'bg-gray-50 text-gray-600'}`}>
+                                        {hive.status.toUpperCase()}
                                     </span>
                                 </div>
-                                <div className="col-span-2 text-sm text-gray-600 truncate">
-                                    {hive.partner?.name || 'No partner assigned'}
+                                <div className="col-span-2 text-sm text-secondary truncate font-medium">
+                                    {hive.partner?.name || <span className="text-secondary/40 italic">No partner assigned</span>}
                                 </div>
                                 <div className="col-span-1 text-right pr-12">
-                                    <span className="text-sm text-gray-600">
-                                        {hive.available_cells_count}/{hive.total_cells}
+                                    <span className="text-sm font-bold text-primary">
+                                        {hive.available_cells_count} <span className="text-secondary/40 font-medium">/ {hive.total_cells}</span>
                                     </span>
                                 </div>
-                                <div className="col-span-1 flex items-center justify-end gap-4">
-                                    {hive.status === 'disabled' ? (
-                                        <button
-                                            onClick={() => toggleStatus(hive)}
-                                            className="flex items-center gap-1 px-3 py-1 bg-green-600 text-white text-xs font-bold rounded-full hover:bg-green-700 transition-colors shadow-sm"
-                                            title="Enable Box"
-                                        >
-                                            <PowerIcon className="h-4 w-4" />
-                                            ENABLE
-                                        </button>
-                                    ) : (
-                                        <button
-                                            onClick={() => toggleStatus(hive)}
-                                            className="p-1.5 text-red-600 hover:bg-red-50 rounded-full transition-colors"
-                                            title="Disable Box"
-                                        >
-                                            <PowerIcon className="h-5 w-5" />
-                                        </button>
-                                    )}
+                                <div className="col-span-1 flex items-center justify-end gap-3">
+                                    <button
+                                        onClick={() => toggleStatus(hive)}
+                                        className={`p-2 rounded-xl transition-all ${hive.status === 'disabled' ? 'text-green-500 hover:bg-green-500/10' : 'text-red-500 hover:bg-red-500/10'}`}
+                                        title={hive.status === 'disabled' ? 'Enable Box' : 'Disable Box'}
+                                    >
+                                        <PowerIcon className="h-5 w-5" />
+                                    </button>
                                     <button
                                         onClick={() => handleEdit(hive)}
-                                        className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors"
+                                        className={`p-2 rounded-xl transition-all ${isDarkMode ? 'text-zinc-500 hover:text-bumble-yellow hover:bg-bumble-yellow/10' : 'text-gray-400 hover:text-bumble-yellow-dark hover:bg-bumble-yellow/10'}`}
                                         title="Edit"
                                     >
                                         <PencilIcon className="h-5 w-5" />
                                     </button>
+                                </div>
+                            </div>
+
+                            {/* Mobile Layout */}
+                            <div className="lg:hidden p-6 space-y-6">
+                                <div className="flex justify-between items-start">
+                                    <div>
+                                        <p className="font-bold text-primary text-lg">{hive.name}</p>
+                                        <span className={`inline-block mt-1 text-[10px] font-bold px-2.5 py-0.5 rounded-full ${hive.status === 'assigned' ? 'bg-blue-500/10 text-blue-500' : hive.status === 'disabled' ? 'bg-red-500/10 text-red-500' : isDarkMode ? 'bg-zinc-800 text-zinc-400' : 'bg-gray-50 text-gray-600'}`}>
+                                            {hive.status.toUpperCase()}
+                                        </span>
+                                    </div>
+                                    <div className="flex gap-2">
+                                        <button
+                                            onClick={() => toggleStatus(hive)}
+                                            className={`p-2 rounded-xl transition-all ${hive.status === 'disabled' ? 'text-green-500 hover:bg-green-500/10' : 'text-red-500 hover:bg-red-500/10'}`}
+                                        >
+                                            <PowerIcon className="h-6 w-6" />
+                                        </button>
+                                        <button
+                                            onClick={() => handleEdit(hive)}
+                                            className={`p-2 rounded-xl transition-all ${isDarkMode ? 'text-zinc-500 hover:text-bumble-yellow hover:bg-bumble-yellow/10' : 'text-gray-400 hover:text-bumble-yellow-dark hover:bg-bumble-yellow/10'}`}
+                                        >
+                                            <PencilIcon className="h-6 w-6" />
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-4">
+                                    <div className="flex items-start gap-3">
+                                        <MapPinIcon className="h-5 w-5 text-secondary/40 shrink-0 mt-0.5" />
+                                        <div>
+                                            <p className="text-sm font-bold text-primary">{hive.partner?.name || 'No partner assigned'}</p>
+                                            <p className="text-xs text-secondary mt-0.5">{hive.address || 'N/A'}</p>
+                                        </div>
+                                    </div>
+
+                                    <div className="pt-4 border-t border-default">
+                                        <div className="flex justify-between items-center">
+                                            <p className="text-[10px] font-bold text-secondary uppercase tracking-wider">Available Slots</p>
+                                            <p className="text-sm font-bold text-primary">
+                                                {hive.available_cells_count} <span className="text-secondary/40 font-medium">/ {hive.total_cells}</span>
+                                            </p>
+                                        </div>
+                                        <div className={`mt-2 h-2 w-full rounded-full overflow-hidden ${isDarkMode ? 'bg-zinc-800' : 'bg-gray-100'}`}>
+                                            <div
+                                                className={`h-full transition-all duration-500 ${hive.available_cells_count === 0 ? 'bg-red-500' : 'bg-bumble-yellow'}`}
+                                                style={{ width: `${(hive.available_cells_count / hive.total_cells) * 100}%` }}
+                                            ></div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -412,11 +457,11 @@ const BoxList = () => {
                                 leaveFrom="opacity-100 translate-y-0 sm:scale-100"
                                 leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
                             >
-                                <Dialog.Panel className="relative transform overflow-hidden rounded-2xl bg-white px-4 pb-4 pt-5 text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-2xl sm:p-10">
+                                <Dialog.Panel className={`relative transform overflow-hidden rounded-2xl px-4 pb-4 pt-5 text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-2xl sm:p-10 ${isDarkMode ? 'bg-zinc-900' : 'bg-white'}`}>
                                     <div className="absolute right-0 top-0 hidden pr-6 pt-6 sm:block">
                                         <button
                                             type="button"
-                                            className="rounded-full bg-gray-100 p-2 text-gray-400 hover:text-gray-500 hover:bg-gray-200 focus:outline-none transition-all"
+                                            className={`rounded-full p-2 focus:outline-none transition-all ${isDarkMode ? 'bg-zinc-800 text-zinc-500 hover:text-zinc-400 hover:bg-zinc-700' : 'bg-gray-100 text-gray-400 hover:text-gray-500 hover:bg-gray-200'}`}
                                             onClick={() => setIsEditModalOpen(false)}
                                         >
                                             <XMarkIcon className="h-6 w-6" aria-hidden="true" />
@@ -424,13 +469,13 @@ const BoxList = () => {
                                     </div>
                                     <div className="sm:flex sm:items-start">
                                         <div className="mt-3 text-center sm:ml-4 sm:mt-0 sm:text-left w-full">
-                                            <Dialog.Title as="h3" className="text-2xl font-bold leading-6 text-gray-900">
+                                            <Dialog.Title as="h3" className="text-2xl font-bold leading-6 text-primary">
                                                 Edit BumbleHive Box
                                             </Dialog.Title>
                                             <form onSubmit={handleUpdate} className="mt-10 space-y-10">
                                                 {/* Box Details Section */}
-                                                <div className="bg-gray-50/50 p-6 rounded-xl border border-gray-100">
-                                                    <h4 className="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2">
+                                                <div className={`p-6 rounded-xl border ${isDarkMode ? 'bg-zinc-800/50 border-zinc-700' : 'bg-gray-50/50 border-gray-100'}`}>
+                                                    <h4 className="text-lg font-bold text-primary mb-6 flex items-center gap-2">
                                                         <span className="w-1.5 h-6 bg-bumble-yellow rounded-full"></span>
                                                         Box Details
                                                     </h4>
@@ -456,12 +501,12 @@ const BoxList = () => {
                                                             />
                                                         </div>
                                                         <div className="space-y-2">
-                                                            <label className="block text-sm font-semibold text-gray-700">Box Location Image</label>
-                                                            <div className="mt-1 flex justify-center px-6 pt-8 pb-8 border-2 border-gray-300 border-dashed rounded-xl bg-white hover:border-bumble-yellow hover:bg-yellow-50/30 transition-all cursor-pointer relative group">
+                                                            <label className="block text-sm font-semibold text-secondary">Box Location Image</label>
+                                                            <div className={`mt-1 flex justify-center px-6 pt-8 pb-8 border-2 border-dashed rounded-xl transition-all cursor-pointer relative group ${isDarkMode ? 'bg-zinc-900 border-zinc-700 hover:border-bumble-yellow hover:bg-bumble-yellow/5' : 'bg-white border-gray-300 hover:border-bumble-yellow hover:bg-yellow-50/30'}`}>
                                                                 <div className="space-y-2 text-center">
-                                                                    <PhotoIcon className="mx-auto h-14 w-14 text-gray-400 group-hover:text-bumble-yellow transition-colors" />
-                                                                    <div className="flex text-sm text-gray-600 justify-center">
-                                                                        <label className="relative cursor-pointer rounded-md font-bold text-bumble-black hover:text-gray-700 focus-within:outline-none">
+                                                                    <PhotoIcon className={`mx-auto h-14 w-14 transition-colors ${isDarkMode ? 'text-zinc-600 group-hover:text-bumble-yellow' : 'text-gray-400 group-hover:text-bumble-yellow'}`} />
+                                                                    <div className="flex text-sm justify-center">
+                                                                        <label className={`relative cursor-pointer rounded-md font-bold focus-within:outline-none ${isDarkMode ? 'text-zinc-300 hover:text-white' : 'text-bumble-black hover:text-gray-700'}`}>
                                                                             <span>Upload a new file</span>
                                                                             <input
                                                                                 type="file"
@@ -473,12 +518,12 @@ const BoxList = () => {
                                                                                 }}
                                                                             />
                                                                         </label>
-                                                                        <p className="pl-1">or drag and drop</p>
+                                                                        <p className={`pl-1 ${isDarkMode ? 'text-zinc-500' : 'text-gray-600'}`}>or drag and drop</p>
                                                                     </div>
-                                                                    <p className="text-xs text-gray-500 font-medium">PNG, JPG, GIF up to 2MB</p>
+                                                                    <p className={`text-xs font-medium ${isDarkMode ? 'text-zinc-600' : 'text-gray-500'}`}>PNG, JPG, GIF up to 2MB</p>
                                                                 </div>
                                                                 {(editImage || (selectedHive?.photos && selectedHive.photos.length > 0)) && (
-                                                                    <div className="absolute inset-0 bg-white p-3 rounded-xl shadow-inner">
+                                                                    <div className={`absolute inset-0 p-3 rounded-xl shadow-inner ${isDarkMode ? 'bg-zinc-900' : 'bg-white'}`}>
                                                                         <img
                                                                             src={editImage ? URL.createObjectURL(editImage) : `${API_URL}/storage/${selectedHive?.photos?.[0]}`}
                                                                             alt="Preview"
@@ -503,27 +548,27 @@ const BoxList = () => {
                                                 </div>
 
                                                 {/* Assign Box Section */}
-                                                <div className="bg-gray-50/50 p-6 rounded-xl border border-gray-100">
-                                                    <h4 className="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2">
+                                                <div className={`p-6 rounded-xl border ${isDarkMode ? 'bg-zinc-800/50 border-zinc-700' : 'bg-gray-50/50 border-gray-100'}`}>
+                                                    <h4 className="text-lg font-bold text-primary mb-6 flex items-center gap-2">
                                                         <span className="w-1.5 h-6 bg-bumble-yellow rounded-full"></span>
                                                         Assign Box
                                                     </h4>
                                                     <div className="space-y-6">
                                                         <div className="relative">
-                                                            <label className="block text-sm font-semibold text-gray-700 mb-2">Assign To</label>
+                                                            <label className="block text-sm font-semibold text-secondary mb-2">Assign To</label>
                                                             <div className="relative">
                                                                 <input
                                                                     type="text"
                                                                     placeholder="Search partners by name or business..."
-                                                                    className="w-full pl-4 pr-12 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-bumble-yellow focus:border-bumble-yellow transition-all"
+                                                                    className={`w-full pl-4 pr-12 py-3 border rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-bumble-yellow focus:border-bumble-yellow transition-all ${isDarkMode ? 'bg-zinc-900 border-zinc-700 text-white placeholder-zinc-600' : 'bg-white border-gray-300 text-gray-900 placeholder-gray-400'}`}
                                                                     value={editPartnerSearch}
                                                                     onChange={(e) => setEditPartnerSearch(e.target.value)}
                                                                 />
-                                                                <MagnifyingGlassIcon className="absolute right-4 top-3.5 h-5 w-5 text-gray-400" />
+                                                                <MagnifyingGlassIcon className="absolute right-4 top-3.5 h-5 w-5 text-zinc-500" />
                                                             </div>
 
                                                             {editPartnerSearch && (
-                                                                <div className="absolute z-10 mt-2 w-full border border-gray-200 rounded-xl shadow-xl max-h-60 overflow-y-auto bg-white divide-y divide-gray-50">
+                                                                <div className={`absolute z-10 mt-2 w-full border rounded-xl shadow-xl max-h-60 overflow-y-auto divide-y ${isDarkMode ? 'bg-zinc-800 border-zinc-700 divide-zinc-700' : 'bg-white border-gray-200 divide-gray-50'}`}>
                                                                     {partners
                                                                         .filter(p =>
                                                                             p.name.toLowerCase().includes(editPartnerSearch.toLowerCase()) ||
@@ -532,7 +577,7 @@ const BoxList = () => {
                                                                         .map(partner => (
                                                                             <div
                                                                                 key={partner.id}
-                                                                                className={`flex items-center gap-4 px-5 py-4 cursor-pointer hover:bg-yellow-50/50 transition-colors ${selectedHive?.partner_id === partner.id ? 'bg-yellow-50 border-l-4 border-bumble-yellow' : ''}`}
+                                                                                className={`flex items-center gap-4 px-5 py-4 cursor-pointer transition-colors ${selectedHive?.partner_id === partner.id ? (isDarkMode ? 'bg-bumble-yellow/10 border-l-4 border-bumble-yellow' : 'bg-yellow-50 border-l-4 border-bumble-yellow') : (isDarkMode ? 'hover:bg-zinc-700' : 'hover:bg-yellow-50/50')}`}
                                                                                 onClick={() => {
                                                                                     setSelectedHive(prev => prev ? { ...prev, partner_id: partner.id } : null);
                                                                                     setEditPartnerSearch(partner.name);
@@ -551,7 +596,7 @@ const BoxList = () => {
                                                                             </div>
                                                                         ))}
                                                                     {partners.filter(p => p.name.toLowerCase().includes(editPartnerSearch.toLowerCase()) || p.business_name?.toLowerCase().includes(editPartnerSearch.toLowerCase())).length === 0 && (
-                                                                        <div className="px-5 py-4 text-sm text-gray-500 text-center italic">No partners found</div>
+                                                                        <div className="px-5 py-4 text-sm text-secondary text-center italic">No partners found</div>
                                                                     )}
                                                                 </div>
                                                             )}
@@ -591,7 +636,7 @@ const BoxList = () => {
                                                     <Button
                                                         type="button"
                                                         variant="outline"
-                                                        className="flex-1 py-4 rounded-xl font-bold text-gray-700 hover:bg-gray-50 transition-all order-2 sm:order-1"
+                                                        className={`flex-1 py-4 rounded-xl font-bold transition-all order-2 sm:order-1 border-default ${isDarkMode ? 'text-zinc-400 hover:bg-zinc-800' : 'text-gray-700 hover:bg-gray-50'}`}
                                                         onClick={() => setIsEditModalOpen(false)}
                                                     >
                                                         Cancel
@@ -599,7 +644,7 @@ const BoxList = () => {
                                                     <Button
                                                         type="submit"
                                                         variant="bumble"
-                                                        className="flex-[2] py-4 shadow-lg shadow-gray-200 order-1 sm:order-2"
+                                                        className={`flex-[2] py-4 shadow-lg order-1 sm:order-2 ${isDarkMode ? 'shadow-black/20' : 'shadow-gray-200'}`}
                                                         isLoading={isSaving}
                                                     >
                                                         Save Changes
@@ -641,11 +686,11 @@ const BoxList = () => {
                                 leaveFrom="opacity-100 translate-y-0 sm:scale-100"
                                 leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
                             >
-                                <Dialog.Panel className="relative transform overflow-hidden rounded-2xl bg-white px-4 pb-4 pt-5 text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-2xl sm:p-10">
+                                <Dialog.Panel className={`relative transform overflow-hidden rounded-2xl px-4 pb-4 pt-5 text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-2xl sm:p-10 ${isDarkMode ? 'bg-zinc-900' : 'bg-white'}`}>
                                     <div className="absolute right-0 top-0 hidden pr-6 pt-6 sm:block">
                                         <button
                                             type="button"
-                                            className="rounded-full bg-gray-100 p-2 text-gray-400 hover:text-gray-500 hover:bg-gray-200 focus:outline-none transition-all"
+                                            className={`rounded-full p-2 focus:outline-none transition-all ${isDarkMode ? 'bg-zinc-800 text-zinc-500 hover:text-zinc-400 hover:bg-zinc-700' : 'bg-gray-100 text-gray-400 hover:text-gray-500 hover:bg-gray-200'}`}
                                             onClick={() => setIsAddModalOpen(false)}
                                         >
                                             <XMarkIcon className="h-6 w-6" aria-hidden="true" />
@@ -653,13 +698,13 @@ const BoxList = () => {
                                     </div>
                                     <div className="sm:flex sm:items-start">
                                         <div className="mt-3 text-center sm:ml-4 sm:mt-0 sm:text-left w-full">
-                                            <Dialog.Title as="h3" className="text-2xl font-bold leading-6 text-gray-900">
+                                            <Dialog.Title as="h3" className="text-2xl font-bold leading-6 text-primary">
                                                 Add New BumbleHive Box
                                             </Dialog.Title>
                                             <form onSubmit={handleAddBox} className="mt-10 space-y-10">
                                                 {/* Box Details Section */}
-                                                <div className="bg-gray-50/50 p-6 rounded-xl border border-gray-100">
-                                                    <h4 className="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2">
+                                                <div className={`p-6 rounded-xl border ${isDarkMode ? 'bg-zinc-800/50 border-zinc-700' : 'bg-gray-50/50 border-gray-100'}`}>
+                                                    <h4 className="text-lg font-bold text-primary mb-6 flex items-center gap-2">
                                                         <span className="w-1.5 h-6 bg-bumble-yellow rounded-full"></span>
                                                         Box Details
                                                     </h4>
@@ -683,12 +728,12 @@ const BoxList = () => {
                                                                 required
                                                             />
                                                             <div className="space-y-1">
-                                                                <label className="block text-sm font-medium text-gray-700">Box Location Image</label>
-                                                                <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md hover:border-bumble-yellow transition-colors cursor-pointer relative">
+                                                                <label className="block text-sm font-medium text-secondary">Box Location Image</label>
+                                                                <div className={`mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-dashed rounded-md transition-colors cursor-pointer relative ${isDarkMode ? 'bg-zinc-900 border-zinc-700 hover:border-bumble-yellow' : 'bg-white border-gray-300 hover:border-bumble-yellow'}`}>
                                                                     <div className="space-y-1 text-center">
-                                                                        <PhotoIcon className="mx-auto h-12 w-12 text-gray-400" />
-                                                                        <div className="flex text-sm text-gray-600">
-                                                                            <label className="relative cursor-pointer bg-white rounded-md font-medium text-blue-600 hover:text-blue-500 focus-within:outline-none">
+                                                                        <PhotoIcon className={`mx-auto h-12 w-12 ${isDarkMode ? 'text-zinc-600' : 'text-gray-400'}`} />
+                                                                        <div className="flex text-sm">
+                                                                            <label className={`relative cursor-pointer rounded-md font-medium focus-within:outline-none ${isDarkMode ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-500'}`}>
                                                                                 <span>Upload a file</span>
                                                                                 <input
                                                                                     type="file"
@@ -700,12 +745,12 @@ const BoxList = () => {
                                                                                     }}
                                                                                 />
                                                                             </label>
-                                                                            <p className="pl-1">or drag and drop</p>
+                                                                            <p className={`pl-1 ${isDarkMode ? 'text-zinc-500' : 'text-gray-600'}`}>or drag and drop</p>
                                                                         </div>
-                                                                        <p className="text-xs text-gray-500">PNG, JPG, GIF up to 2MB</p>
+                                                                        <p className={`text-xs ${isDarkMode ? 'text-zinc-600' : 'text-gray-500'}`}>PNG, JPG, GIF up to 2MB</p>
                                                                     </div>
                                                                     {newBox.image && (
-                                                                        <div className="absolute inset-0 bg-white p-2 rounded-md">
+                                                                        <div className={`absolute inset-0 p-2 rounded-md ${isDarkMode ? 'bg-zinc-900' : 'bg-white'}`}>
                                                                             <img
                                                                                 src={URL.createObjectURL(newBox.image)}
                                                                                 alt="Preview"
@@ -727,27 +772,27 @@ const BoxList = () => {
                                                 </div>
 
                                                 {/* Assign Box Section */}
-                                                <div className="bg-gray-50/50 p-6 rounded-xl border border-gray-100">
-                                                    <h4 className="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2">
+                                                <div className={`p-6 rounded-xl border ${isDarkMode ? 'bg-zinc-800/50 border-zinc-700' : 'bg-gray-50/50 border-gray-100'}`}>
+                                                    <h4 className="text-lg font-bold text-primary mb-6 flex items-center gap-2">
                                                         <span className="w-1.5 h-6 bg-bumble-yellow rounded-full"></span>
                                                         Assign Box
                                                     </h4>
                                                     <div className="space-y-6">
                                                         <div className="relative">
-                                                            <label className="block text-sm font-semibold text-gray-700 mb-2">Assign To</label>
+                                                            <label className="block text-sm font-semibold text-secondary mb-2">Assign To</label>
                                                             <div className="relative">
                                                                 <input
                                                                     type="text"
                                                                     placeholder="Search partners by name or business..."
-                                                                    className="w-full pl-4 pr-12 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-bumble-yellow focus:border-bumble-yellow transition-all"
+                                                                    className={`w-full pl-4 pr-12 py-3 border rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-bumble-yellow focus:border-bumble-yellow transition-all ${isDarkMode ? 'bg-zinc-900 border-zinc-700 text-white placeholder-zinc-600' : 'bg-white border-gray-300 text-gray-900 placeholder-gray-400'}`}
                                                                     value={partnerSearch}
                                                                     onChange={(e) => setPartnerSearch(e.target.value)}
                                                                 />
-                                                                <MagnifyingGlassIcon className="absolute right-4 top-3.5 h-5 w-5 text-gray-400" />
+                                                                <MagnifyingGlassIcon className="absolute right-4 top-3.5 h-5 w-5 text-zinc-500" />
                                                             </div>
 
                                                             {partnerSearch && (
-                                                                <div className="absolute z-10 mt-2 w-full border border-gray-200 rounded-xl shadow-xl max-h-60 overflow-y-auto bg-white divide-y divide-gray-50">
+                                                                <div className={`absolute z-10 mt-2 w-full border rounded-xl shadow-xl max-h-60 overflow-y-auto divide-y ${isDarkMode ? 'bg-zinc-800 border-zinc-700 divide-zinc-700' : 'bg-white border-gray-200 divide-gray-50'}`}>
                                                                     {partners
                                                                         .filter(p =>
                                                                             p.name.toLowerCase().includes(partnerSearch.toLowerCase()) ||
@@ -756,18 +801,18 @@ const BoxList = () => {
                                                                         .map(partner => (
                                                                             <div
                                                                                 key={partner.id}
-                                                                                className={`flex items-center gap-4 px-5 py-4 cursor-pointer hover:bg-yellow-50/50 transition-colors ${newBox.partner_id === partner.id.toString() ? 'bg-yellow-50 border-l-4 border-bumble-yellow' : ''}`}
+                                                                                className={`flex items-center gap-4 px-5 py-4 cursor-pointer transition-colors ${newBox.partner_id === partner.id.toString() ? (isDarkMode ? 'bg-bumble-yellow/10 border-l-4 border-bumble-yellow' : 'bg-yellow-50 border-l-4 border-bumble-yellow') : (isDarkMode ? 'hover:bg-zinc-700' : 'hover:bg-yellow-50/50')}`}
                                                                                 onClick={() => {
                                                                                     setNewBox(prev => ({ ...prev, partner_id: partner.id.toString() }));
                                                                                     setPartnerSearch(partner.name);
                                                                                 }}
                                                                             >
-                                                                                <div className="bg-gray-100 p-2 rounded-lg">
-                                                                                    <MapPinIcon className="h-5 w-5 text-gray-500" />
+                                                                                <div className={`p-2 rounded-lg ${isDarkMode ? 'bg-zinc-900' : 'bg-gray-100'}`}>
+                                                                                    <MapPinIcon className={`h-5 w-5 ${isDarkMode ? 'text-zinc-500' : 'text-gray-500'}`} />
                                                                                 </div>
                                                                                 <div>
-                                                                                    <p className="text-sm font-bold text-gray-900">{partner.name}</p>
-                                                                                    <p className="text-xs text-gray-500 font-medium">{partner.business_name || 'No business name'}</p>
+                                                                                    <p className="text-sm font-bold text-primary">{partner.name}</p>
+                                                                                    <p className="text-xs text-secondary font-medium">{partner.business_name || 'No business name'}</p>
                                                                                 </div>
                                                                                 {newBox.partner_id === partner.id.toString() && (
                                                                                     <CheckIcon className="ml-auto h-5 w-5 text-bumble-yellow stroke-[3]" />
@@ -775,7 +820,7 @@ const BoxList = () => {
                                                                             </div>
                                                                         ))}
                                                                     {partners.filter(p => p.name.toLowerCase().includes(partnerSearch.toLowerCase()) || p.business_name?.toLowerCase().includes(partnerSearch.toLowerCase())).length === 0 && (
-                                                                        <div className="px-5 py-4 text-sm text-gray-500 text-center italic">No partners found</div>
+                                                                        <div className="px-5 py-4 text-sm text-secondary text-center italic">No partners found</div>
                                                                     )}
                                                                 </div>
                                                             )}
@@ -815,7 +860,7 @@ const BoxList = () => {
                                                     <Button
                                                         type="button"
                                                         variant="outline"
-                                                        className="flex-1 py-4 rounded-xl font-bold text-gray-700 hover:bg-gray-50 transition-all order-2 sm:order-1"
+                                                        className={`flex-1 py-4 rounded-xl font-bold transition-all order-2 sm:order-1 border-default ${isDarkMode ? 'text-zinc-400 hover:bg-zinc-800' : 'text-gray-700 hover:bg-gray-50'}`}
                                                         onClick={() => setIsAddModalOpen(false)}
                                                     >
                                                         Cancel
@@ -823,7 +868,7 @@ const BoxList = () => {
                                                     <Button
                                                         type="submit"
                                                         variant="bumble"
-                                                        className="flex-[2] py-4 shadow-lg shadow-gray-200 order-1 sm:order-2"
+                                                        className={`flex-[2] py-4 shadow-lg order-1 sm:order-2 ${isDarkMode ? 'shadow-black/20' : 'shadow-gray-200'}`}
                                                         isLoading={isSaving}
                                                     >
                                                         Confirm & Create Box
