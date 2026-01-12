@@ -24,7 +24,8 @@ class AuthTest extends TestCase
             ->assertJsonStructure([
                 'message',
                 'user',
-                'token',
+                'access_token',
+                'refresh_token',
             ]);
 
         $this->assertDatabaseHas('users', [
@@ -49,14 +50,32 @@ class AuthTest extends TestCase
             ->assertJsonStructure([
                 'message',
                 'user',
-                'token',
+                'access_token',
+                'refresh_token',
+            ]);
+    }
+
+    public function test_user_can_refresh_token()
+    {
+        $user = User::factory()->create();
+        $refreshToken = $user->createToken('refresh_token', ['*'], now()->addDays(7))->plainTextToken;
+
+        $response = $this->withHeaders([
+            'Authorization' => 'Bearer ' . $refreshToken,
+        ])->postJson('/api/auth/refresh');
+
+        $response->assertStatus(200)
+            ->assertJsonStructure([
+                'user',
+                'access_token',
+                'refresh_token',
             ]);
     }
 
     public function test_user_can_logout()
     {
         $user = User::factory()->create();
-        $token = $user->createToken('auth_token')->plainTextToken;
+        $token = $user->createToken('access_token')->plainTextToken;
 
         $response = $this->withHeaders([
             'Authorization' => 'Bearer ' . $token,
@@ -65,6 +84,33 @@ class AuthTest extends TestCase
         $response->assertStatus(200)
             ->assertJson(['message' => 'Logged out successfully']);
 
-        $this->assertCount(0, $user->tokens);
+        $this->assertCount(0, $user->fresh()->tokens);
+    }
+
+    public function test_refresh_fails_with_expired_token()
+    {
+        $user = User::factory()->create();
+        $refreshToken = $user->createToken('refresh_token', ['*'], now()->subDay())->plainTextToken;
+
+        $response = $this->withHeaders([
+            'Authorization' => 'Bearer ' . $refreshToken,
+        ])->postJson('/api/auth/refresh');
+
+        $response->assertStatus(401)
+            ->assertJson(['message' => 'Refresh token expired']);
+    }
+
+    public function test_refresh_fails_with_access_token()
+    {
+        $user = User::factory()->create();
+        $accessToken = $user->createToken('access_token', ['*'], now()->addMinutes(15))->plainTextToken;
+
+        $response = $this->withHeaders([
+            'Authorization' => 'Bearer ' . $accessToken,
+        ])->postJson('/api/auth/refresh');
+
+        $response->assertStatus(401)
+            ->assertJson(['message' => 'Invalid refresh token']);
     }
 }
+

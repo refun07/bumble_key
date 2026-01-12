@@ -75,12 +75,12 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 };
 
 function App() {
-  const { fetchUser, isAuthenticated, isLoading, user } = useAuth();
+  const { initializeAuth, isAuthenticated, isLoading, user } = useAuth();
 
   React.useEffect(() => {
-    console.log('App: Initial mount, fetching user...');
-    fetchUser();
-  }, [fetchUser]);
+    console.log('App: Initial mount, initializing auth...');
+    initializeAuth();
+  }, [initializeAuth]);
 
   console.log('App: Rendering, state:', { isAuthenticated, isLoading, user });
 

@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Route;
 // Public routes
 Route::post('/auth/register', [AuthController::class, 'register']);
 Route::post('/auth/login', [AuthController::class, 'login']);
+Route::post('/auth/refresh', [AuthController::class, 'refresh']);
 Route::get('/hives/public', [\App\Http\Controllers\Api\PublicHiveController::class, 'index']);
 Route::get('/pricing', [\App\Http\Controllers\Api\Admin\SettingController::class, 'pricing']);
 
