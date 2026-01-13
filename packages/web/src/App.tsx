@@ -43,6 +43,7 @@ import { useAuth } from './store/auth';
 import CookieConsent from './components/common/CookieConsent';
 import ToastContainer from './components/common/ToastContainer';
 import Locations from './pages/Locations';
+import AppLoader from './components/common/AppLoader';
 
 // Smart Dashboard Redirect
 const DashboardRedirect = () => {
@@ -87,14 +88,14 @@ function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/login" element={<React.Suspense fallback={<div>Loading...</div>}><Login /></React.Suspense>} />
-        <Route path="/register" element={<React.Suspense fallback={<div>Loading...</div>}><Register /></React.Suspense>} />
+        <Route path="/login" element={<React.Suspense fallback={<AppLoader/>}><Login /></React.Suspense>} />
+        <Route path="/register" element={<React.Suspense fallback={<AppLoader/>}><Register /></React.Suspense>} />
         <Route path="/host/signup" element={<HostSignup />} />
         <Route path="/guest/pickup/:id" element={<GuestPickupView />} />
 
         {/* Landing Pages */}
         <Route element={<LandingLayout />}>
-          <Route path="/" element={isAuthenticated ? <Navigate to="/dashboard" /> : <React.Suspense fallback={<div>Loading...</div>}><Landing /></React.Suspense>} />
+          <Route path="/" element={isAuthenticated ? <Navigate to="/dashboard" /> : <React.Suspense fallback={<AppLoader/>}><Landing /></React.Suspense>} />
           <Route path="/about" element={<About />} />
           <Route path="/influencers" element={<Influencers />} />
           <Route path="/projects" element={<Projects />} />
@@ -122,17 +123,17 @@ function App() {
             </ProtectedRoute>
           }
         >
-          <Route path="dashboard" element={<React.Suspense fallback={<div>Loading...</div>}><AdminDashboard /></React.Suspense>} />
-          <Route path="boxes" element={<React.Suspense fallback={<div>Loading...</div>}><BoxList /></React.Suspense>} />
-          <Route path="nfc-fobs" element={<React.Suspense fallback={<div>Loading...</div>}><NfcFobList /></React.Suspense>} />
-          <Route path="partners" element={<React.Suspense fallback={<div>Loading...</div>}><PartnerList /></React.Suspense>} />
-          <Route path="hosts" element={<React.Suspense fallback={<div>Loading...</div>}><HostList /></React.Suspense>} />
-          <Route path="hosts/:id" element={<React.Suspense fallback={<div>Loading...</div>}><HostDetails /></React.Suspense>} />
-          <Route path="hosts/:id/keys/:keyId" element={<React.Suspense fallback={<div>Loading...</div>}><HostKeyDetailsAdmin /></React.Suspense>} />
-          <Route path="activity-log" element={<React.Suspense fallback={<div>Loading...</div>}><ActivityLog /></React.Suspense>} />
-          <Route path="accounts" element={<React.Suspense fallback={<div>Loading...</div>}><Accounts /></React.Suspense>} />
-          <Route path="reports" element={<React.Suspense fallback={<div>Loading...</div>}><Reports /></React.Suspense>} />
-          <Route path="settings" element={<React.Suspense fallback={<div>Loading...</div>}><AdminSettings /></React.Suspense>} />
+          <Route path="dashboard" element={<React.Suspense fallback={<AppLoader/>}><AdminDashboard /></React.Suspense>} />
+          <Route path="boxes" element={<React.Suspense fallback={<AppLoader/>}><BoxList /></React.Suspense>} />
+          <Route path="nfc-fobs" element={<React.Suspense fallback={<AppLoader/>}><NfcFobList /></React.Suspense>} />
+          <Route path="partners" element={<React.Suspense fallback={<AppLoader/>}><PartnerList /></React.Suspense>} />
+          <Route path="hosts" element={<React.Suspense fallback={<AppLoader/>}><HostList /></React.Suspense>} />
+          <Route path="hosts/:id" element={<React.Suspense fallback={<AppLoader/>}><HostDetails /></React.Suspense>} />
+          <Route path="hosts/:id/keys/:keyId" element={<React.Suspense fallback={<AppLoader/>}><HostKeyDetailsAdmin /></React.Suspense>} />
+          <Route path="activity-log" element={<React.Suspense fallback={<AppLoader/>}><ActivityLog /></React.Suspense>} />
+          <Route path="accounts" element={<React.Suspense fallback={<AppLoader/>}><Accounts /></React.Suspense>} />
+          <Route path="reports" element={<React.Suspense fallback={<AppLoader/>}><Reports /></React.Suspense>} />
+          <Route path="settings" element={<React.Suspense fallback={<AppLoader/>}><AdminSettings /></React.Suspense>} />
           <Route path="*" element={<div className="text-xl">Page under construction</div>} />
         </Route>
 
@@ -145,7 +146,7 @@ function App() {
             </ProtectedRoute>
           }
         >
-          <Route path="dashboard" element={<React.Suspense fallback={<div>Loading...</div>}><HostDashboard /></React.Suspense>} />
+          <Route path="dashboard" element={<React.Suspense fallback={<AppLoader/>}><HostDashboard /></React.Suspense>} />
           <Route path="keys" element={<HostKeyList />} />
           <Route path="keys/new" element={<KeyRegistration />} />
           <Route path="keys/:id" element={<HostKeyDetailsHost />} />
