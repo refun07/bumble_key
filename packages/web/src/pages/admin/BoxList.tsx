@@ -7,6 +7,11 @@ import { MagnifyingGlassIcon, PencilIcon, XMarkIcon, PowerIcon, PlusIcon, ArrowP
 import { TableShimmer } from '../../components/common/Shimmer';
 import { useToast } from '../../store/toast';
 import { useTheme } from '../../store/theme';
+import LocationPicker from '../../components/maps/LocationPicker';
+import { useDebounce } from '../../hooks/useDebounce';
+
+
+
 
 interface Hive {
     id: number;
@@ -50,6 +55,10 @@ const BoxList = () => {
     const [editImage, setEditImage] = useState<File | null>(null);
     const [editPartnerSearch, setEditPartnerSearch] = useState('');
 
+   
+
+    const [showMap, setShowMap] = useState(false);
+
     // Add Box State
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [partners, setPartners] = useState<any[]>([]);
@@ -59,9 +68,9 @@ const BoxList = () => {
         location_name: '',
         address: '',
         city: '',
-        country: 'UK',
-        latitude: 51.5074,
-        longitude: -0.1278,
+        country: '',
+        latitude: '',
+        longitude: '',
         total_cells: 10,
         partner_id: '',
         image: null as File | null
@@ -71,6 +80,16 @@ const BoxList = () => {
         fetchHives();
         fetchPartners();
     }, [search, statusFilter, availabilityFilter, sortBy, sortOrder]);
+
+
+    const debouncedAddress = useDebounce(newBox.address, 700);
+    const debouncedCity = useDebounce(newBox.city, 700);
+
+    useEffect(() => {
+        if (!debouncedAddress || !debouncedCity) return;
+
+        geocodeAddress();
+    }, [debouncedAddress, debouncedCity]);
 
     const fetchPartners = async () => {
         try {
@@ -232,6 +251,33 @@ const BoxList = () => {
         setAvailabilityFilter('');
         setSortBy('name');
         setSortOrder('asc');
+    };
+
+
+
+    const geocodeAddress = async () => {
+            const query = `${newBox.address}, ${newBox.city}, ${newBox.country}`.trim();
+
+            if (query.length < 8) return;
+
+            try {
+                const res = await fetch(
+                    `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`
+                );
+
+                const data = await res.json();
+                if (!data.length) return;
+
+                setNewBox(prev => ({
+                    ...prev,
+                    latitude: parseFloat(data[0].lat),
+                    longitude: parseFloat(data[0].lon),
+                }));
+
+                setShowMap(true);
+            } catch {
+                // silently fail (better UX)
+            }
     };
 
     return (
@@ -630,6 +676,7 @@ const BoxList = () => {
                                                             required
                                                         />
                                                     </div>
+                                                  
                                                 </div>
 
                                                 <div className="pt-6 flex flex-col sm:flex-row gap-4">
@@ -845,15 +892,60 @@ const BoxList = () => {
                                                                 required
                                                             />
                                                         </div>
-                                                        <Input
+                                                        {/* <Input
                                                             label="Address"
                                                             placeholder="Full street address"
                                                             value={newBox.address}
                                                             onChange={(e) => setNewBox(prev => ({ ...prev, address: e.target.value }))}
                                                             error={errors.address?.[0]}
                                                             required
-                                                        />
+                                                        /> */}
                                                     </div>
+                                                        <Input
+                                                            label="Address"
+                                                            placeholder="Full street address"
+                                                            value={newBox.address}
+                                                            onChange={(e) =>
+                                                                setNewBox(prev => ({ ...prev, address: e.target.value }))
+                                                            }
+                                                            error={errors.address?.[0]}
+                                                            required
+                                                        />
+
+
+                                                        <Button
+                                                            type="button"
+                                                            variant="outline"
+                                                            className="w-full mt-2"
+                                                            onClick={geocodeAddress}
+                                                        >
+                                                            Show on Map
+                                                        </Button>
+
+                                                        {showMap && (
+                                                            <div className="mt-4 space-y-2">
+                                                                <p className="text-sm font-semibold text-secondary">
+                                                                    Pin exact box location
+                                                                </p>
+
+                                                                <LocationPicker
+                                                                    latitude={newBox.latitude}
+                                                                    longitude={newBox.longitude}
+                                                                    onChange={(lat, lng) =>
+                                                                        setNewBox(prev => ({
+                                                                            ...prev,
+                                                                            latitude: lat,
+                                                                            longitude: lng
+                                                                        }))
+                                                                    }
+                                                                />
+
+                                                                <p className="text-xs text-secondary">
+                                                                    Lat: {newBox.latitude.toFixed(6)} | Lng: {newBox.longitude.toFixed(6)}
+                                                                </p>
+                                                            </div>
+                                                        )}
+
                                                 </div>
 
                                                 <div className="pt-6 flex flex-col sm:flex-row gap-4">
@@ -875,6 +967,7 @@ const BoxList = () => {
                                                     </Button>
                                                 </div>
                                             </form>
+                                            
                                         </div>
                                     </div>
                                 </Dialog.Panel>

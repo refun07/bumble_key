@@ -145,6 +145,7 @@ const KeyRegistration = () => {
         e.preventDefault();
         setIsSaving(true);
         setErrors({});
+        
         try {
             await api.post('/hosts/keys', formData);
             showToast('Key registered successfully', 'success');
