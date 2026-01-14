@@ -91,7 +91,7 @@ const AdminLayout = () => {
 
     const navigation = [
         { name: 'Dashboard', href: '/admin/dashboard', icon: HomeIcon },
-        { name: 'Boxes', href: '/admin/boxes', icon: CubeIcon },
+        { name: 'BumbleHive', href: '/admin/boxes', icon: CubeIcon },
         { name: 'NFC Fobs', href: '/admin/nfc-fobs', icon: SignalIcon },
         { name: 'Hive Partners', href: '/admin/partners', icon: UserGroupIcon },
         { name: 'Hosts', href: '/admin/hosts', icon: UsersIcon },

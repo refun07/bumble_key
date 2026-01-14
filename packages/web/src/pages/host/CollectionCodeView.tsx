@@ -32,6 +32,8 @@ const CollectionCodeView = () => {
 
             if (keyData.current_assignment) {
                 const linkResponse = await api.post(`/hosts/assignments/${keyData.current_assignment.id}/magic-link`);
+
+                console.log(linkResponse);
                 setMagicLink(linkResponse.data.magic_link);
             }
         } catch (error) {
