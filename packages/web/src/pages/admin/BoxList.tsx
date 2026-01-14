@@ -202,9 +202,9 @@ const BoxList = () => {
                 location_name: '',
                 address: '',
                 city: '',
-                country: 'UK',
-                latitude: 51.5074,
-                longitude: -0.1278,
+                country: 'Bangladesh',
+                latitude: 23.7804927,
+                longitude: 90.3582974,
                 total_cells: 10,
                 partner_id: '',
                 image: null
@@ -259,30 +259,34 @@ const BoxList = () => {
 
 
 
-    const geocodeAddress = async () => {
-            const query = `${newBox.address}, ${newBox.city}, ${newBox.country}`.trim();
+  const geocodeAddress = async () => {
+    const query = `${newBox.address}, ${newBox.city}`.trim();
 
-            if (query.length < 8) return;
+    if (query.length < 8) return;
 
-            try {
-                const res = await fetch(
-                    `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`
-                );
+    try {
+        const res = await fetch(
+            `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&q=${encodeURIComponent(query)}`
+        );
 
-                const data = await res.json();
-                if (!data.length) return;
+        const data = await res.json();
+        if (!data.length) return;
 
-                setNewBox(prev => ({
-                    ...prev,
-                    latitude: parseFloat(data[0].lat),
-                    longitude: parseFloat(data[0].lon),
-                }));
+        const result = data[0];
 
-                setShowMap(true);
-            } catch {
-                // silently fail (better UX)
-            }
-    };
+        setNewBox(prev => ({
+            ...prev,
+            latitude: parseFloat(result.lat),
+            longitude: parseFloat(result.lon),
+            country: result.address?.country || prev.country,
+        }));
+
+        setShowMap(true);
+    } catch {
+        // silently fail (better UX)
+    }
+};
+
 
     return (
         <div className="space-y-6">
