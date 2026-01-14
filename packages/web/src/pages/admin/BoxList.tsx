@@ -34,7 +34,7 @@ interface Hive {
     photos?: string[];
 }
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+const API_URL = import.meta.env.VITE_API_URL ;
 
 const BoxList = () => {
     const { showToast } = useToast();
@@ -175,16 +175,20 @@ const BoxList = () => {
 
     const handleAddBox = async (e: React.FormEvent) => {
         e.preventDefault();
-        setIsSaving(true);
+        // setIsSaving(true);
         setErrors({});
 
         const formData = new FormData();
+
+       
+
         Object.entries(newBox).forEach(([key, value]) => {
             if (value !== null) {
                 formData.append(key, value as any);
             }
         });
 
+        
         try {
             await api.post('/admin/hives', formData, {
                 headers: {
