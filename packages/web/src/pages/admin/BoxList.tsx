@@ -10,7 +10,18 @@ import { useTheme } from '../../store/theme';
 import LocationPicker from '../../components/maps/LocationPicker';
 import { useDebounce } from '../../hooks/useDebounce';
 
-
+interface NewBox {
+    name: string;
+    location_name: string;
+    address: string;
+    city: string;
+    country: string;
+    latitude: number;
+    longitude: number;
+    total_cells: number;
+    partner_id: string;
+    image: File | null;
+}
 
 
 interface Hive {
@@ -35,12 +46,18 @@ interface Hive {
 }
 
 const API_URL = import.meta.env.VITE_API_URL ;
-
+const APP_URL = import.meta.env.VITE_APP_URL ;
 const BoxList = () => {
     const { showToast } = useToast();
     const { isDarkMode } = useTheme();
     const [hives, setHives] = useState<Hive[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+
+
+    const [currentPage, setCurrentPage] = useState(1);
+    const [lastPage, setLastPage] = useState(1);
+    const [total, setTotal] = useState(0);
+
     const [search, setSearch] = useState('');
     const [statusFilter, setStatusFilter] = useState('');
     const [availabilityFilter, setAvailabilityFilter] = useState('');
@@ -55,7 +72,8 @@ const BoxList = () => {
     const [editImage, setEditImage] = useState<File | null>(null);
     const [editPartnerSearch, setEditPartnerSearch] = useState('');
 
-   
+
+    
 
     const [showMap, setShowMap] = useState(false);
 
@@ -63,21 +81,25 @@ const BoxList = () => {
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [partners, setPartners] = useState<any[]>([]);
     const [partnerSearch, setPartnerSearch] = useState('');
-    const [newBox, setNewBox] = useState({
-        name: '',
-        location_name: '',
-        address: '',
-        city: '',
-        country: '',
-        latitude: '',
-        longitude: '',
-        total_cells: 10,
-        partner_id: '',
-        image: null as File | null
-    });
+ const [newBox, setNewBox] = useState<NewBox>({
+    name: '',
+    location_name: '',
+    address: '',
+    city: '',
+    country: 'Bangladesh',
+    latitude: 23.7804927,   // default Dhaka
+    longitude: 90.3582974,
+    total_cells: 10,
+    partner_id: '',
+    image: null
+});
+
+
+
+    
 
     useEffect(() => {
-        fetchHives();
+        fetchHives(1);
         fetchPartners();
     }, [search, statusFilter, availabilityFilter, sortBy, sortOrder]);
 
@@ -100,25 +122,33 @@ const BoxList = () => {
         }
     };
 
-    const fetchHives = async () => {
-        setIsLoading(true);
-        try {
-            const response = await api.get('/admin/hives', {
-                params: {
-                    search,
-                    status: statusFilter,
-                    availability: availabilityFilter,
-                    sort_by: sortBy,
-                    sort_order: sortOrder
-                }
-            });
-            setHives(response.data.data);
-        } catch (error) {
-            console.error('Failed to fetch hives', error);
-        } finally {
-            setIsLoading(false);
-        }
-    };
+ const fetchHives = async (page = 1) => {
+    setIsLoading(true);
+    try {
+        const response = await api.get('/admin/hives', {
+            params: {
+                page,
+                search,
+                status: statusFilter,
+                availability: availabilityFilter,
+                sort_by: sortBy,
+                sort_order: sortOrder
+            }
+        });
+
+        const res = response.data;
+
+        setHives(res.data);
+        setCurrentPage(res.current_page);
+        setLastPage(res.last_page);
+        setTotal(res.total);
+    } catch (error) {
+        console.error('Failed to fetch hives', error);
+    } finally {
+        setIsLoading(false);
+    }
+};
+
 
     const handleEdit = (hive: Hive) => {
         setSelectedHive(hive);
@@ -259,34 +289,30 @@ const BoxList = () => {
 
 
 
-  const geocodeAddress = async () => {
-    const query = `${newBox.address}, ${newBox.city}`.trim();
+    const geocodeAddress = async () => {
+            const query = `${newBox.address}, ${newBox.city}, ${newBox.country}`.trim();
 
-    if (query.length < 8) return;
+            if (query.length < 8) return;
 
-    try {
-        const res = await fetch(
-            `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&q=${encodeURIComponent(query)}`
-        );
+            try {
+                const res = await fetch(
+                    `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`
+                );
 
-        const data = await res.json();
-        if (!data.length) return;
+                const data = await res.json();
+                if (!data.length) return;
 
-        const result = data[0];
+                setNewBox(prev => ({
+                    ...prev,
+                    latitude: Number(data[0].lat),
+                    longitude: Number(data[0].lon),
+                }));
 
-        setNewBox(prev => ({
-            ...prev,
-            latitude: parseFloat(result.lat),
-            longitude: parseFloat(result.lon),
-            country: result.address?.country || prev.country,
-        }));
-
-        setShowMap(true);
-    } catch {
-        // silently fail (better UX)
-    }
-};
-
+                setShowMap(true);
+            } catch {
+                // silently fail (better UX)
+            }
+    };
 
     return (
         <div className="space-y-6">
@@ -483,6 +509,62 @@ const BoxList = () => {
                         </div>
                     ))
                 )}
+                {/* Pagination */}
+                {lastPage > 1 && (
+                    <div className="flex items-center justify-between mt-8">
+                        <p className="text-sm text-secondary">
+                            Showing page <span className="font-bold">{currentPage}</span> of{' '}
+                            <span className="font-bold">{lastPage}</span> • Total {total}
+                        </p>
+
+                        <div className="flex gap-2">
+                            {/* Previous */}
+                            <button
+                                disabled={currentPage === 1}
+                                onClick={() => fetchHives(currentPage - 1)}
+                                className={`px-4 py-2 rounded-xl text-sm font-bold transition cursor-pointer
+                                    ${currentPage === 1
+                                        ? 'opacity-40 cursor-not-allowed '
+                                        : 'bg-primary border border-default hover:bg-bumble-yellow/10'}
+                                `}
+                            >
+                                Previous
+                            </button>
+
+                            {/* Page Numbers */}
+                            {[...Array(lastPage)].map((_, i) => {
+                                const page = i + 1;
+                                return (
+                                    <button
+                                        key={page}
+                                        onClick={() => fetchHives(page)}
+                                        className={`w-10 h-10 rounded-xl text-sm font-bold transition cursor-pointer
+                                            ${page === currentPage
+                                                ? 'bg-bumble-yellow text-black'
+                                                : 'bg-primary border border-default hover:bg-bumble-yellow/10'}
+                                        `}
+                                    >
+                                        {page}
+                                    </button>
+                                );
+                            })}
+
+                            {/* Next */}
+                            <button
+                                disabled={currentPage === lastPage}
+                                onClick={() => fetchHives(currentPage + 1)}
+                                className={`px-4 py-2 rounded-xl text-sm font-bold transition cursor-pointer
+                                    ${currentPage === lastPage
+                                        ? 'opacity-40 cursor-not-allowed bg-gray-200'
+                                        : 'bg-primary border border-default hover:bg-bumble-yellow/10'}
+                                `}
+                            >
+                                Next
+                            </button>
+                        </div>
+                    </div>
+                )}
+
             </div>
 
             {/* Edit Modal */}
@@ -579,7 +661,7 @@ const BoxList = () => {
                                                                 {(editImage || (selectedHive?.photos && selectedHive.photos.length > 0)) && (
                                                                     <div className={`absolute inset-0 p-3 rounded-xl shadow-inner ${isDarkMode ? 'bg-zinc-900' : 'bg-white'}`}>
                                                                         <img
-                                                                            src={editImage ? URL.createObjectURL(editImage) : `${API_URL}/storage/${selectedHive?.photos?.[0]}`}
+                                                                            src={editImage ? URL.createObjectURL(editImage) : `${APP_URL}/storage/${selectedHive?.photos?.[0]}`}
                                                                             alt="Preview"
                                                                             className="h-full w-full object-cover rounded-lg"
                                                                         />
