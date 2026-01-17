@@ -48,4 +48,9 @@ class Hive extends Model
     {
         return $this->hasMany(NfcFob::class, 'assigned_hive_id');
     }
+
+    public function hasAvailableCell(): bool
+    {
+        return $this->available_cells > 0;
+    }
 }
