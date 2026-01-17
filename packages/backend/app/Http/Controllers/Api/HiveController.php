@@ -5,9 +5,21 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Hive;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class HiveController extends Controller
 {
+
+    public function hiveList()
+    {
+        $hiveList = Hive::query()
+            ->select('id', 'name', 'location_name', 'partner_id', 'status')
+            ->orderBy('name')
+            ->whereIn('status', ['idle', 'active'])
+            ->get();
+
+        return response()->json($hiveList);
+    }
     public function index(Request $request)
     {
         $query = Hive::query();
@@ -127,10 +139,38 @@ class HiveController extends Controller
             'image' => 'nullable|image|max:2048',
         ]);
 
+
+        /* ----------------------------------------
+       🗑️ REMOVE IMAGE (explicit)
+    ---------------------------------------- */
+        if ($request->boolean('remove_image')) {
+            if (is_array($hive->photos)) {
+                foreach ($hive->photos as $photo) {
+                    Storage::disk('public')->delete($photo);
+                }
+            }
+
+            $validated['photos'] = null;
+        }
+
+        /* ----------------------------------------
+       📸 REPLACE IMAGE
+    ---------------------------------------- */
         if ($request->hasFile('image')) {
+            // delete old images first
+            if (is_array($hive->photos)) {
+                foreach ($hive->photos as $photo) {
+                    Storage::disk('public')->delete($photo);
+                }
+            }
+
             $path = $request->file('image')->store('hives', 'public');
             $validated['photos'] = [$path];
         }
+        // if ($request->hasFile('image')) {
+        //     $path = $request->file('image')->store('hives', 'public');
+        //     $validated['photos'] = [$path];
+        // }
 
         $hive->update($validated);
 

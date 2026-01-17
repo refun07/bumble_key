@@ -46,6 +46,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::apiResource('hosts', \App\Http\Controllers\Api\Admin\HostController::class);
         Route::apiResource('partners', \App\Http\Controllers\Api\Admin\PartnerController::class);
         Route::apiResource('hives', \App\Http\Controllers\Api\HiveController::class);
+        Route::get('hives/list/all', [\App\Http\Controllers\Api\HiveController::class,'hiveList']);
         Route::apiResource('nfc-fobs', \App\Http\Controllers\Api\Admin\NfcFobController::class);
         Route::get('audit-logs', [\App\Http\Controllers\Api\Admin\AuditLogController::class, 'index']);
         Route::get('search', [\App\Http\Controllers\Api\Admin\SearchController::class, 'index']);
