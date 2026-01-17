@@ -34,6 +34,7 @@ class NfcFobController extends Controller
                 $query->whereNull('assigned_slot');
             }
         }
+        $query->orderBy('updated_at','desc');
 
         return response()->json($query->paginate(20));
     }
