@@ -1,4 +1,4 @@
-import { useState, useEffect, Fragment } from 'react';
+import { useState, useEffect, Fragment, useRef } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
 import api from '../../services/api';
 import Button from '../../components/common/Button';
@@ -73,7 +73,16 @@ const BoxList = () => {
     const [editPartnerSearch, setEditPartnerSearch] = useState('');
 
 
-    
+    const [removeEditImage, setRemoveEditImage] = useState(false);
+    const [showEditMap, setShowEditMap] = useState(false);
+
+    const toNum = (v: any, fallback = 0) => {
+  const n = typeof v === 'number' ? v : Number(v);
+  return Number.isFinite(n) ? n : fallback;
+};
+
+const fmt6 = (v: any) => toNum(v).toFixed(6);
+
 
     const [showMap, setShowMap] = useState(false);
 
@@ -81,18 +90,18 @@ const BoxList = () => {
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [partners, setPartners] = useState<any[]>([]);
     const [partnerSearch, setPartnerSearch] = useState('');
- const [newBox, setNewBox] = useState<NewBox>({
-    name: '',
-    location_name: '',
-    address: '',
-    city: '',
-    country: 'Bangladesh',
-    latitude: 23.7804927,   // default Dhaka
-    longitude: 90.3582974,
-    total_cells: 10,
-    partner_id: '',
-    image: null
-});
+    const [newBox, setNewBox] = useState<NewBox>({
+        name: '',
+        location_name: '',
+        address: '',
+        city: '',
+        country: 'Bangladesh',
+        latitude: 23.7804927,   // default Dhaka
+        longitude: 90.3582974,
+        total_cells: 10,
+        partner_id: '',
+        image: null
+    });
 
 
 
@@ -149,16 +158,32 @@ const BoxList = () => {
     }
 };
 
+const isEditInitialized = useRef(false);
+
+ const hasCoords = (hive: Hive) =>
+Number(hive.latitude) && Number(hive.longitude);
 
     const handleEdit = (hive: Hive) => {
-        setSelectedHive(hive);
+        setSelectedHive({
+            ...hive,
+            latitude: Number(hive.latitude),
+            longitude: Number(hive.longitude),
+        });
+
         setEditPartnerSearch(hive.partner?.name || '');
         setEditImage(null);
+        setRemoveEditImage(false);
         setErrors({});
+
+        // ✅ show map ONLY if coordinates already exist
+        setShowEditMap(hasCoords(hive));
+
         setIsEditModalOpen(true);
     };
 
-    const handleUpdate = async (e: React.FormEvent) => {
+
+
+   const handleUpdate = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!selectedHive) return;
 
@@ -168,8 +193,18 @@ const BoxList = () => {
         const formData = new FormData();
         formData.append('_method', 'PUT');
 
-        // Append basic fields
-        const fields = ['name', 'location_name', 'address', 'city', 'country', 'latitude', 'longitude', 'partner_id', 'status'];
+        const fields = [
+            'name',
+            'location_name',
+            'address',
+            'city',
+            'country',
+            'latitude',
+            'longitude',
+            'partner_id',
+            'status'
+        ];
+
         fields.forEach(field => {
             const value = (selectedHive as any)[field];
             if (value !== undefined && value !== null) {
@@ -177,16 +212,20 @@ const BoxList = () => {
             }
         });
 
+        //  IMAGE LOGIC
+        if (removeEditImage) {
+            formData.append('remove_image', '1');
+        }
+
         if (editImage) {
             formData.append('image', editImage);
         }
 
         try {
             await api.post(`/admin/hives/${selectedHive.id}`, formData, {
-                headers: {
-                    'Content-Type': 'multipart/form-data'
-                }
+                headers: { 'Content-Type': 'multipart/form-data' }
             });
+
             showToast('Box updated successfully', 'success');
             setIsEditModalOpen(false);
             fetchHives();
@@ -195,13 +234,13 @@ const BoxList = () => {
                 setErrors(error.response.data.errors);
                 showToast('Please check the form for errors', 'error');
             } else {
-                console.error('Failed to update hive', error);
                 showToast('Failed to update box', 'error');
             }
         } finally {
             setIsSaving(false);
         }
     };
+
 
     const handleAddBox = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -311,6 +350,56 @@ const BoxList = () => {
                 setShowMap(true);
             } catch {
                 // silently fail (better UX)
+            }
+    };
+
+
+    const debouncedEditAddress = useDebounce(selectedHive?.address || '', 700);
+    const debouncedEditCity = useDebounce(selectedHive?.city || '', 700);
+
+  useEffect(() => {
+    if (!selectedHive) return;
+    if (!debouncedEditAddress || !debouncedEditCity) return;
+
+    //  Skip first render (initial load)
+    if (!isEditInitialized.current) {
+        isEditInitialized.current = true;
+        return;
+    }
+
+    geocodeEditAddress();
+}, [debouncedEditAddress, debouncedEditCity]);
+
+
+
+    const geocodeEditAddress = async () => {
+    if (!selectedHive) return;
+
+            const query = `${selectedHive.address}, ${selectedHive.city}, ${selectedHive.country}`.trim();
+
+            if (query.length < 8) return;
+
+            try {
+                const res = await fetch(
+                    `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`
+                );
+
+                const data = await res.json();
+                if (!data.length) return;
+
+                setSelectedHive(prev =>
+                    prev
+                        ? {
+                            ...prev,
+                            latitude: Number(data[0].lat),
+                            longitude: Number(data[0].lon)
+                        }
+                        : null
+                );
+
+                setShowEditMap(true);
+            } catch {
+                // silent fail (same UX as add modal)
             }
     };
 
@@ -636,50 +725,81 @@ const BoxList = () => {
                                                                 disabled // Usually you don't want to change total slots after creation
                                                             />
                                                         </div>
-                                                        <div className="space-y-2">
-                                                            <label className="block text-sm font-semibold text-secondary">Box Location Image</label>
-                                                            <div className={`mt-1 flex justify-center px-6 pt-8 pb-8 border-2 border-dashed rounded-xl transition-all cursor-pointer relative group ${isDarkMode ? 'bg-zinc-900 border-zinc-700 hover:border-bumble-yellow hover:bg-bumble-yellow/5' : 'bg-white border-gray-300 hover:border-bumble-yellow hover:bg-yellow-50/30'}`}>
-                                                                <div className="space-y-2 text-center">
-                                                                    <PhotoIcon className={`mx-auto h-14 w-14 transition-colors ${isDarkMode ? 'text-zinc-600 group-hover:text-bumble-yellow' : 'text-gray-400 group-hover:text-bumble-yellow'}`} />
-                                                                    <div className="flex text-sm justify-center">
-                                                                        <label className={`relative cursor-pointer rounded-md font-bold focus-within:outline-none ${isDarkMode ? 'text-zinc-300 hover:text-white' : 'text-bumble-black hover:text-gray-700'}`}>
-                                                                            <span>Upload a new file</span>
-                                                                            <input
-                                                                                type="file"
-                                                                                className="sr-only"
-                                                                                accept="image/*"
-                                                                                onChange={(e) => {
-                                                                                    const file = e.target.files?.[0];
-                                                                                    if (file) setEditImage(file);
-                                                                                }}
-                                                                            />
-                                                                        </label>
-                                                                        <p className={`pl-1 ${isDarkMode ? 'text-zinc-500' : 'text-gray-600'}`}>or drag and drop</p>
-                                                                    </div>
-                                                                    <p className={`text-xs font-medium ${isDarkMode ? 'text-zinc-600' : 'text-gray-500'}`}>PNG, JPG, GIF up to 2MB</p>
+                                                   <div className="space-y-2">
+                                                        <label className="block text-sm font-semibold text-secondary">
+                                                            Box Location Image
+                                                        </label>
+
+                                                        <div
+                                                            className={`mt-1 flex justify-center px-6 pt-8 pb-8 border-2 border-dashed rounded-xl transition-all cursor-pointer relative
+                                                            ${isDarkMode
+                                                                ? 'bg-zinc-900 border-zinc-700 hover:border-bumble-yellow'
+                                                                : 'bg-white border-gray-300 hover:border-bumble-yellow'
+                                                            }`}
+                                                        >
+                                                            {!editImage && !removeEditImage && selectedHive?.photos?.length ? (
+                                                                // ✅ EXISTING IMAGE
+                                                                <div className="relative w-full h-56">
+                                                                    <img
+                                                                        src={`${APP_URL}/storage/${selectedHive.photos[0]}`}
+                                                                        className="h-full w-full object-cover rounded-lg"
+                                                                    />
+                                                                    <button
+                                                                        type="button"
+                                                                        className="absolute top-3 right-3 bg-red-500 text-white rounded-full p-2"
+                                                                        onClick={() => setRemoveEditImage(true)}
+                                                                    >
+                                                                        <XMarkIcon className="h-4 w-4 stroke-[3]" />
+                                                                    </button>
                                                                 </div>
-                                                                {(editImage || (selectedHive?.photos && selectedHive.photos.length > 0)) && (
-                                                                    <div className={`absolute inset-0 p-3 rounded-xl shadow-inner ${isDarkMode ? 'bg-zinc-900' : 'bg-white'}`}>
-                                                                        <img
-                                                                            src={editImage ? URL.createObjectURL(editImage) : `${APP_URL}/storage/${selectedHive?.photos?.[0]}`}
-                                                                            alt="Preview"
-                                                                            className="h-full w-full object-cover rounded-lg"
-                                                                        />
-                                                                        <button
-                                                                            type="button"
-                                                                            className="absolute top-4 right-4 bg-red-500 text-white rounded-full p-1.5 shadow-lg hover:bg-red-600 transition-colors"
-                                                                            onClick={() => {
-                                                                                if (editImage) setEditImage(null);
-                                                                                // If it's an existing photo, we might need a way to delete it, but for now just hide it if we upload a new one
+                                                            ) : editImage ? (
+                                                                // ✅ NEW IMAGE PREVIEW
+                                                                <div className="relative w-full h-56">
+                                                                    <img
+                                                                        src={URL.createObjectURL(editImage)}
+                                                                        className="h-full w-full object-cover rounded-lg"
+                                                                    />
+                                                                    <button
+                                                                        type="button"
+                                                                        className="absolute top-3 right-3 bg-red-500 text-white rounded-full p-2"
+                                                                        onClick={() => setEditImage(null)}
+                                                                    >
+                                                                        <XMarkIcon className="h-4 w-4 stroke-[3]" />
+                                                                    </button>
+                                                                </div>
+                                                            ) : (
+                                                                // ✅ UPLOAD STATE
+                                                                <div className="space-y-2 text-center">
+                                                                    <PhotoIcon className="mx-auto h-14 w-14 text-zinc-500" />
+                                                                    <label className="cursor-pointer font-bold text-sm">
+                                                                        Upload a new file
+                                                                        <input
+                                                                            type="file"
+                                                                            className="sr-only"
+                                                                            accept="image/*"
+                                                                            onChange={(e) => {
+                                                                                const file = e.target.files?.[0];
+                                                                                if (file) {
+                                                                                    setEditImage(file);
+                                                                                    setRemoveEditImage(false);
+                                                                                }
                                                                             }}
-                                                                        >
-                                                                            <XMarkIcon className="h-4 w-4 stroke-[3]" />
-                                                                        </button>
-                                                                    </div>
-                                                                )}
-                                                            </div>
-                                                            {errors.image && <p className="mt-1 text-sm text-red-600 font-medium">{errors.image[0]}</p>}
+                                                                        />
+                                                                    </label>
+                                                                    <p className="text-xs text-secondary">
+                                                                        PNG, JPG up to 2MB
+                                                                    </p>
+                                                                </div>
+                                                            )}
                                                         </div>
+
+                                                        {errors.image && (
+                                                            <p className="text-sm text-red-600 font-medium">
+                                                                {errors.image[0]}
+                                                            </p>
+                                                        )}
+                                                    </div>
+
                                                     </div>
                                                 </div>
 
@@ -765,7 +885,39 @@ const BoxList = () => {
                                                             error={errors.address?.[0]}
                                                             required
                                                         />
+                                                      
+
+
+                                                            {showEditMap && selectedHive && (
+    <div className="mt-4 space-y-2">
+        <p className="text-sm font-semibold text-secondary">
+            Pin exact box location
+        </p>
+
+        <LocationPicker
+            latitude={Number(selectedHive.latitude)}
+            longitude={Number(selectedHive.longitude)}
+            onChange={(lat, lng) =>
+                setSelectedHive(prev =>
+                    prev
+                        ? { ...prev, latitude: lat, longitude: lng }
+                        : null
+                )
+            }
+        />
+
+        <p className="text-xs text-secondary">
+            Lat: {Number(selectedHive.latitude).toFixed(6)} | Lng:{' '}
+            {Number(selectedHive.longitude).toFixed(6)}
+        </p>
+    </div>
+)}
+
+
+
                                                     </div>
+
+                                                    
                                                   
                                                 </div>
 

@@ -49,6 +49,10 @@ const DraggableMarker = ({ latitude, longitude, onChange }: Props) => {
 
     useMapEvents({
         click(e: LeafletMouseEvent) {
+             console.log('[Map Click]', {
+                lat: e.latlng.lat,
+                lng: e.latlng.lng,
+            });
             onChange(e.latlng.lat, e.latlng.lng);
         }
     });
@@ -71,6 +75,9 @@ const DraggableMarker = ({ latitude, longitude, onChange }: Props) => {
 /* ---------------- Location Picker ---------------- */
 
 const LocationPicker = ({ latitude, longitude, zoom = 16, onChange }: Props) => {
+
+    console.log("received data",latitude,longitude);
+
     return (
         <div className="h-[300px] w-full rounded-xl overflow-hidden border border-default">
             <MapContainer
