@@ -3,8 +3,10 @@
 namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Hive;
 use App\Models\NfcFob;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class NfcFobController extends Controller
 {
@@ -36,6 +38,36 @@ class NfcFobController extends Controller
         return response()->json($query->paginate(20));
     }
 
+    // public function store(Request $request)
+    // {
+    //     $validated = $request->validate([
+    //         'fob_name' => 'required|string|max:255',
+    //         'fob_uid' => 'required|string|unique:nfc_fobs,fob_uid',
+    //         'assigned_hive_id' => 'nullable|exists:hives,id',
+    //         'assigned_slot' => 'nullable|string',
+    //         'status' => 'nullable|string|in:available,assigned,damaged',
+    //         'fob_serial' => 'nullable|string|unique:nfc_fobs,fob_serial',
+    //     ]);
+
+    //     if (empty($validated['fob_serial'])) {
+    //         $validated['fob_serial'] = 'SN-' . strtoupper(uniqid());
+    //     }
+
+    //     if (empty($validated['status'])) {
+    //         $validated['status'] = !empty($validated['assigned_hive_id']) ? 'assigned' : 'available';
+    //     }
+
+    //     $fob = NfcFob::create($validated);
+
+    //     return response()->json([
+    //         'message' => 'NFC Fob created successfully',
+    //         'data' => $fob->load('hive'),
+    //     ], 201);
+    // }
+
+
+    
+
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -52,15 +84,28 @@ class NfcFobController extends Controller
         }
 
         if (empty($validated['status'])) {
-            $validated['status'] = !empty($validated['assigned_hive_id']) ? 'assigned' : 'available';
+            $validated['status'] = !empty($validated['assigned_hive_id'])
+                ? 'assigned'
+                : 'available';
         }
 
-        $fob = NfcFob::create($validated);
+        return DB::transaction(function () use ($validated) {
 
-        return response()->json([
-            'message' => 'NFC Fob created successfully',
-            'data' => $fob->load('hive'),
-        ], 201);
+            // 🔹 Create fob
+            $fob = NfcFob::create($validated);
+
+            // 🔹 Update hive available_cells if assigned
+            if (!empty($validated['assigned_hive_id'])) {
+                Hive::where('id', $validated['assigned_hive_id'])
+                    ->where('available_cells', '>', 0)
+                    ->decrement('available_cells', 1);
+            }
+
+            return response()->json([
+                'message' => 'NFC Fob created successfully',
+                'data' => $fob->load('hive'),
+            ], 201);
+        });
     }
 
     public function update(Request $request, $id)

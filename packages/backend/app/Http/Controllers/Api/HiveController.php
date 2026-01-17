@@ -20,6 +20,59 @@ class HiveController extends Controller
 
         return response()->json($hiveList);
     }
+    // public function index(Request $request)
+    // {
+    //     $query = Hive::query();
+
+    //     // Search filter
+    //     if ($request->search) {
+    //         $query->where(function ($q) use ($request) {
+    //             $q->where('name', 'like', "%{$request->search}%")
+    //                 ->orWhere('location_name', 'like', "%{$request->search}%")
+    //                 ->orWhere('address', 'like', "%{$request->search}%")
+    //                 ->orWhere('city', 'like', "%{$request->search}%");
+    //         });
+    //     }
+
+    //     // Status filter
+    //     if ($request->status) {
+    //         $query->where('status', $request->status);
+    //     }
+
+    //     // Availability filter
+    //     if ($request->availability) {
+    //         if ($request->availability === 'available') {
+    //             $query->whereHas('cells', function ($q) {
+    //                 $q->where('status', 'available');
+    //             });
+    //         } elseif ($request->availability === 'full') {
+    //             $query->whereDoesntHave('cells', function ($q) {
+    //                 $q->where('status', 'available');
+    //             });
+    //         }
+    //     }
+
+    //     $hives = $query->with(['partner'])->withCount([
+    //         'cells as available_cells_count' => function ($query) {
+    //             $query->where('status', 'available');
+    //         }
+    //     ]);
+
+    //     // Sorting
+    //     $sortBy = $request->get('sort_by', 'name');
+    //     $sortOrder = $request->get('sort_order', 'asc');
+
+    //     if ($sortBy === 'available_cells_count') {
+    //         $hives->orderBy('available_cells_count', $sortOrder);
+    //     } else {
+    //         $hives->orderBy($sortBy, $sortOrder);
+    //     }
+
+    //     $hives = $hives->paginate(20);
+
+    //     return response()->json($hives);
+    // }
+
     public function index(Request $request)
     {
         $query = Hive::query();
@@ -39,38 +92,22 @@ class HiveController extends Controller
             $query->where('status', $request->status);
         }
 
-        // Availability filter
-        if ($request->availability) {
-            if ($request->availability === 'available') {
-                $query->whereHas('cells', function ($q) {
-                    $q->where('status', 'available');
-                });
-            } elseif ($request->availability === 'full') {
-                $query->whereDoesntHave('cells', function ($q) {
-                    $q->where('status', 'available');
-                });
-            }
-        }
-
-        $hives = $query->with(['partner'])->withCount([
-            'cells as available_cells_count' => function ($query) {
-                $query->where('status', 'available');
-            }
-        ]);
+        $hives = $query
+            ->with('partner')
+            ->select('hives.*')
+            ->selectRaw('available_cells as available_cells_count');
 
         // Sorting
         $sortBy = $request->get('sort_by', 'name');
         $sortOrder = $request->get('sort_order', 'asc');
 
         if ($sortBy === 'available_cells_count') {
-            $hives->orderBy('available_cells_count', $sortOrder);
+            $hives->orderBy('available_cells', $sortOrder);
         } else {
             $hives->orderBy($sortBy, $sortOrder);
         }
 
-        $hives = $hives->paginate(20);
-
-        return response()->json($hives);
+        return response()->json($hives->paginate(20));
     }
 
     public function store(Request $request)
@@ -88,6 +125,8 @@ class HiveController extends Controller
             'operating_hours' => 'nullable|array',
             'image' => 'nullable|image|max:2048',
         ]);
+
+        $validated['available_cells'] = $validated['total_cells'];
 
         if ($request->hasFile('image')) {
             $path = $request->file('image')->store('hives', 'public');
