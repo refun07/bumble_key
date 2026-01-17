@@ -46,6 +46,9 @@ const NfcFobList = () => {
     const [hiveStatus, setHiveStatus] = useState('all');
     const [slotStatus, setSlotStatus] = useState('all');
 
+    const [currentPage, setCurrentPage] = useState(1);
+    const [lastPage, setLastPage] = useState(1);
+    const [total, setTotal] = useState(0);
     // Modal State
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedFob, setSelectedFob] = useState<NfcFob | null>(null);
@@ -58,9 +61,14 @@ const NfcFobList = () => {
     const [errors, setErrors] = useState<Record<string, string[]>>({});
     const [hiveSearch, setHiveSearch] = useState('');
 
+   useEffect(() => {
+    setCurrentPage(1);
+    }, [search, hiveStatus, slotStatus]);
+
     useEffect(() => {
         fetchFobs();
-    }, [search, hiveStatus, slotStatus]);
+    }, [currentPage, search, hiveStatus, slotStatus]);
+
 
     useEffect(() => {
         fetchHives();
@@ -71,12 +79,19 @@ const NfcFobList = () => {
         try {
             const response = await api.get('/admin/nfc-fobs', {
                 params: {
+                    page: currentPage,
                     search,
                     hive_status: hiveStatus === 'all' ? '' : hiveStatus,
-                    slot_status: slotStatus === 'all' ? '' : slotStatus
-                }
+                    slot_status: slotStatus === 'all' ? '' : slotStatus,
+                },
             });
+
             setFobs(response.data.data);
+
+            // 🔹 pagination meta from Laravel
+            setCurrentPage(response.data.current_page);
+            setLastPage(response.data.last_page);
+            setTotal(response.data.total);
         } catch (error) {
             console.error('Failed to fetch NFC fobs', error);
         } finally {
@@ -84,9 +99,10 @@ const NfcFobList = () => {
         }
     };
 
+
     const fetchHives = async () => {
         try {
-            const response = await api.get('/admin/hives', {
+            const response = await api.get('/admin/hives/list/all', {
                 params: { paginate: 0 } // Assuming paginate=0 returns all or use a large limit
             });
             // The response structure might be different depending on pagination
@@ -350,6 +366,49 @@ const NfcFobList = () => {
                         </div>
                     ))
                 )}
+                {lastPage > 1 && (
+                    <div className="flex items-center justify-between px-6 py-4 bg-primary border border-default rounded-2xl">
+                        <p className="text-sm font-medium text-secondary">
+                            Showing {(currentPage - 1) * 20 + 1}–{Math.min(currentPage * 20, total)} of {total}
+                        </p>
+
+                        <div className="flex items-center gap-2">
+                            <button
+                                disabled={currentPage === 1}
+                                onClick={() => setCurrentPage(p => p - 1)}
+                                className="px-4 py-2 text-sm font-bold rounded-xl border border-default disabled:opacity-40 hover:border-bumble-yellow"
+                            >
+                                Prev
+                            </button>
+
+                            {Array.from({ length: lastPage }).map((_, i) => {
+                                const page = i + 1;
+                                return (
+                                    <button
+                                        key={page}
+                                        onClick={() => setCurrentPage(page)}
+                                        className={`px-4 py-2 text-sm font-bold rounded-xl border ${
+                                            page === currentPage
+                                                ? 'bg-bumble-yellow text-bumble-black border-bumble-yellow'
+                                                : 'border-default hover:border-bumble-yellow'
+                                        }`}
+                                    >
+                                        {page}
+                                    </button>
+                                );
+                            })}
+
+                            <button
+                                disabled={currentPage === lastPage}
+                                onClick={() => setCurrentPage(p => p + 1)}
+                                className="px-4 py-2 text-sm font-bold rounded-xl border border-default disabled:opacity-40 hover:border-bumble-yellow"
+                            >
+                                Next
+                            </button>
+                        </div>
+                    </div>
+                )}
+
             </div>
 
             {/* Add/Edit Modal */}
