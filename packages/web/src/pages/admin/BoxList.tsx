@@ -45,7 +45,7 @@ interface Hive {
     photos?: string[];
 }
 
-const API_URL = import.meta.env.VITE_API_URL ;
+
 const APP_URL = import.meta.env.VITE_APP_URL ;
 const BoxList = () => {
     const { showToast } = useToast();
@@ -67,8 +67,8 @@ const BoxList = () => {
     const [selectedHive, setSelectedHive] = useState<Hive | null>(null);
     const [isSaving, setIsSaving] = useState(false);
     const [errors, setErrors] = useState<Record<string, string[]>>({});
-    const [sortBy, setSortBy] = useState('name');
-    const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+    const [sortBy, setSortBy] = useState('updated_at');
+    const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
     const [editImage, setEditImage] = useState<File | null>(null);
     const [editPartnerSearch, setEditPartnerSearch] = useState('');
 
@@ -76,12 +76,9 @@ const BoxList = () => {
     const [removeEditImage, setRemoveEditImage] = useState(false);
     const [showEditMap, setShowEditMap] = useState(false);
 
-    const toNum = (v: any, fallback = 0) => {
-  const n = typeof v === 'number' ? v : Number(v);
-  return Number.isFinite(n) ? n : fallback;
-};
+ 
 
-const fmt6 = (v: any) => toNum(v).toFixed(6);
+
 
 
     const [showMap, setShowMap] = useState(false);
@@ -160,8 +157,10 @@ const fmt6 = (v: any) => toNum(v).toFixed(6);
 
 const isEditInitialized = useRef(false);
 
- const hasCoords = (hive: Hive) =>
-Number(hive.latitude) && Number(hive.longitude);
+const hasCoords = (hive: Hive): boolean =>
+    Number.isFinite(Number(hive.latitude)) &&
+    Number.isFinite(Number(hive.longitude));
+
 
     const handleEdit = (hive: Hive) => {
         setSelectedHive({
@@ -175,7 +174,7 @@ Number(hive.latitude) && Number(hive.longitude);
         setRemoveEditImage(false);
         setErrors({});
 
-        // ✅ show map ONLY if coordinates already exist
+        //  show map ONLY if coordinates already exist
         setShowEditMap(hasCoords(hive));
 
         setIsEditModalOpen(true);
@@ -322,8 +321,8 @@ Number(hive.latitude) && Number(hive.longitude);
         setSearch('');
         setStatusFilter('');
         setAvailabilityFilter('');
-        setSortBy('name');
-        setSortOrder('asc');
+        setSortBy('updated_at');
+        setSortOrder('desc');
     };
 
 
@@ -372,14 +371,21 @@ Number(hive.latitude) && Number(hive.longitude);
 
 
 
-    const geocodeEditAddress = async () => {
+    const geocodeEditAddress = async (isUpdate:boolean = false) => {
     if (!selectedHive) return;
 
+        
             const query = `${selectedHive.address}, ${selectedHive.city}, ${selectedHive.country}`.trim();
 
-            if (query.length < 8) return;
+            // console.log(selectedHive);
+            // if (query.length < 8) return;
+
+            if(selectedHive.latitude !=null && selectedHive.longitude!=null && isUpdate==false) return ;
 
             try {
+
+
+                console.log("updating maps");
                 const res = await fetch(
                     `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`
                 );
@@ -886,32 +892,39 @@ Number(hive.latitude) && Number(hive.longitude);
                                                             required
                                                         />
                                                       
-
+                                                            <Button
+                                                                type="button"
+                                                               
+                                                                className="w-full mt-2"
+                                                                onClick={() => geocodeEditAddress(true)}
+                                                            >
+                                                                Show / Update Map
+                                                            </Button>
 
                                                             {showEditMap && selectedHive && (
-    <div className="mt-4 space-y-2">
-        <p className="text-sm font-semibold text-secondary">
-            Pin exact box location
-        </p>
+                                                                <div className="mt-4 space-y-2">
+                                                                    <p className="text-sm font-semibold text-secondary">
+                                                                        Pin exact box location
+                                                                    </p>
 
-        <LocationPicker
-            latitude={Number(selectedHive.latitude)}
-            longitude={Number(selectedHive.longitude)}
-            onChange={(lat, lng) =>
-                setSelectedHive(prev =>
-                    prev
-                        ? { ...prev, latitude: lat, longitude: lng }
-                        : null
-                )
-            }
-        />
+                                                                    <LocationPicker
+                                                                        latitude={Number(selectedHive.latitude)}
+                                                                        longitude={Number(selectedHive.longitude)}
+                                                                        onChange={(lat, lng) =>
+                                                                            setSelectedHive(prev =>
+                                                                                prev
+                                                                                    ? { ...prev, latitude: lat, longitude: lng }
+                                                                                    : null
+                                                                            )
+                                                                        }
+                                                                    />
 
-        <p className="text-xs text-secondary">
-            Lat: {Number(selectedHive.latitude).toFixed(6)} | Lng:{' '}
-            {Number(selectedHive.longitude).toFixed(6)}
-        </p>
-    </div>
-)}
+                                                                    <p className="text-xs text-secondary">
+                                                                        Lat: {Number(selectedHive.latitude).toFixed(6)} | Lng:{' '}
+                                                                        {Number(selectedHive.longitude).toFixed(6)}
+                                                                    </p>
+                                                                </div>
+                                                            )}
 
 
 
@@ -924,7 +937,7 @@ Number(hive.latitude) && Number(hive.longitude);
                                                 <div className="pt-6 flex flex-col sm:flex-row gap-4">
                                                     <Button
                                                         type="button"
-                                                        variant="outline"
+                                                       
                                                         className={`flex-1 py-4 rounded-xl font-bold transition-all order-2 sm:order-1 border-default ${isDarkMode ? 'text-zinc-400 hover:bg-zinc-800' : 'text-gray-700 hover:bg-gray-50'}`}
                                                         onClick={() => setIsEditModalOpen(false)}
                                                     >
@@ -1157,7 +1170,7 @@ Number(hive.latitude) && Number(hive.longitude);
 
                                                         <Button
                                                             type="button"
-                                                            variant="outline"
+                                                            
                                                             className="w-full mt-2"
                                                             onClick={geocodeAddress}
                                                         >
@@ -1193,7 +1206,7 @@ Number(hive.latitude) && Number(hive.longitude);
                                                 <div className="pt-6 flex flex-col sm:flex-row gap-4">
                                                     <Button
                                                         type="button"
-                                                        variant="outline"
+                                                       
                                                         className={`flex-1 py-4 rounded-xl font-bold transition-all order-2 sm:order-1 border-default ${isDarkMode ? 'text-zinc-400 hover:bg-zinc-800' : 'text-gray-700 hover:bg-gray-50'}`}
                                                         onClick={() => setIsAddModalOpen(false)}
                                                     >

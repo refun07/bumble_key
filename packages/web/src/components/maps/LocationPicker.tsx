@@ -76,7 +76,7 @@ const DraggableMarker = ({ latitude, longitude, onChange }: Props) => {
 
 const LocationPicker = ({ latitude, longitude, zoom = 16, onChange }: Props) => {
 
-    console.log("received data",latitude,longitude);
+    
 
     return (
         <div className="h-[300px] w-full rounded-xl overflow-hidden border border-default">
