@@ -60,6 +60,7 @@ const NfcFobList = () => {
     });
     const [errors, setErrors] = useState<Record<string, string[]>>({});
     const [hiveSearch, setHiveSearch] = useState('');
+    const [isHiveSearchTouched, setIsHiveSearchTouched] = useState(false);
 
    useEffect(() => {
     setCurrentPage(1);
@@ -73,6 +74,14 @@ const NfcFobList = () => {
     useEffect(() => {
         fetchHives();
     }, []);
+
+    useEffect(() => {
+        if (!selectedFob || hiveSearch || isHiveSearchTouched) return;
+        const matchedHive = hives.find(hive => hive.id === selectedFob.assigned_hive_id);
+        if (matchedHive) {
+            setHiveSearch(matchedHive.name);
+        }
+    }, [selectedFob, hives, hiveSearch, isHiveSearchTouched]);
 
     const fetchFobs = async () => {
         setIsLoading(true);
@@ -127,6 +136,8 @@ const NfcFobList = () => {
             assigned_hive_id: '',
             assigned_slot: '',
         });
+        setHiveSearch('');
+        setIsHiveSearchTouched(false);
         setErrors({});
         setIsModalOpen(true);
     };
@@ -139,6 +150,8 @@ const NfcFobList = () => {
             assigned_hive_id: fob.assigned_hive_id || '',
             assigned_slot: fob.assigned_slot || '',
         });
+        setHiveSearch(fob.hive?.name || '');
+        setIsHiveSearchTouched(false);
         setErrors({});
         setIsModalOpen(true);
     };
@@ -504,7 +517,10 @@ const NfcFobList = () => {
                                                                     className={`block w-full pl-11 pr-4 py-3 border rounded-xl leading-5 focus:outline-none focus:ring-2 focus:ring-bumble-yellow focus:border-bumble-yellow sm:text-sm transition-all ${isDarkMode ? 'bg-zinc-900 border-zinc-700 text-white placeholder-zinc-600' : 'bg-white border-gray-200 text-gray-900 placeholder-gray-400'}`}
                                                                     placeholder="Search Box"
                                                                     value={hiveSearch}
-                                                                    onChange={(e) => setHiveSearch(e.target.value)}
+                                                                    onChange={(e) => {
+                                                                        setHiveSearch(e.target.value);
+                                                                        setIsHiveSearchTouched(true);
+                                                                    }}
                                                                 />
                                                             </div>
                                                             {hiveSearch && (
@@ -518,6 +534,7 @@ const NfcFobList = () => {
                                                                                 onClick={() => {
                                                                                     setFormData({ ...formData, assigned_hive_id: hive.id });
                                                                                     setHiveSearch(hive.name);
+                                                                                    setIsHiveSearchTouched(true);
                                                                                 }}
                                                                             >
                                                                                 {hive.name}
