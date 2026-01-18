@@ -37,6 +37,11 @@ const PartnerList = () => {
     const [search, setSearch] = useState('');
     const [statusFilter, setStatusFilter] = useState('active');
     const [errors, setErrors] = useState<Record<string, string[]>>({});
+    const [currentPage, setCurrentPage] = useState(1);
+    const [lastPage, setLastPage] = useState(1);
+    const [total, setTotal] = useState(0);
+    const [rangeFrom, setRangeFrom] = useState(0);
+    const [rangeTo, setRangeTo] = useState(0);
 
     // View State
     const [view, setView] = useState<'list' | 'form'>('list');
@@ -64,21 +69,31 @@ const PartnerList = () => {
     });
 
     useEffect(() => {
+        setCurrentPage(1);
+    }, [search, statusFilter]);
+
+    useEffect(() => {
         if (view === 'list') {
             fetchPartners();
         }
-    }, [search, statusFilter, view]);
+    }, [currentPage, search, statusFilter, view]);
 
     const fetchPartners = async () => {
         setIsLoading(true);
         try {
             const response = await api.get('/admin/partners', {
                 params: {
+                    page: currentPage,
                     search,
                     status: statusFilter === 'all' ? '' : statusFilter
                 }
             });
             setPartners(response.data.data);
+            setCurrentPage(response.data.current_page || currentPage);
+            setLastPage(response.data.last_page || 1);
+            setTotal(response.data.total || 0);
+            setRangeFrom(response.data.from || 0);
+            setRangeTo(response.data.to || 0);
         } catch (error) {
             console.error('Failed to fetch partners', error);
         } finally {
@@ -611,6 +626,48 @@ const PartnerList = () => {
                     ))
                 )}
             </div>
+            {lastPage > 1 && (
+                <div className="flex items-center justify-between px-6 py-4 bg-primary border border-default rounded-2xl">
+                    <p className="text-sm font-medium text-secondary">
+                        Showing {rangeFrom}–{rangeTo} of {total}
+                    </p>
+
+                    <div className="flex items-center gap-2">
+                        <button
+                            disabled={currentPage === 1}
+                            onClick={() => setCurrentPage(p => p - 1)}
+                            className="px-4 py-2 text-sm font-bold rounded-xl border border-default disabled:opacity-40 hover:border-bumble-yellow"
+                        >
+                            Prev
+                        </button>
+
+                        {Array.from({ length: lastPage }).map((_, i) => {
+                            const page = i + 1;
+                            return (
+                                <button
+                                    key={page}
+                                    onClick={() => setCurrentPage(page)}
+                                    className={`px-4 py-2 text-sm font-bold rounded-xl border ${
+                                        page === currentPage
+                                            ? 'bg-bumble-yellow text-bumble-black border-bumble-yellow'
+                                            : 'border-default hover:border-bumble-yellow'
+                                    }`}
+                                >
+                                    {page}
+                                </button>
+                            );
+                        })}
+
+                        <button
+                            disabled={currentPage === lastPage}
+                            onClick={() => setCurrentPage(p => p + 1)}
+                            className="px-4 py-2 text-sm font-bold rounded-xl border border-default disabled:opacity-40 hover:border-bumble-yellow"
+                        >
+                            Next
+                        </button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
