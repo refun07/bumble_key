@@ -27,6 +27,7 @@ class User extends Authenticatable
         'latitude',
         'longitude',
         'availability',
+        'unavailable_dates',
         'location_image',
         'password',
         'role', // admin, host, partner, guest
@@ -36,6 +37,7 @@ class User extends Authenticatable
         'two_factor_secret',
         'two_factor_recovery_codes',
         'two_factor_confirmed_at',
+        'can_login',
     ];
 
     /**
@@ -64,6 +66,7 @@ class User extends Authenticatable
             'password' => 'hashed',
             'is_active' => 'boolean',
             'availability' => 'json',
+            'unavailable_dates' => 'json',
             'latitude' => 'decimal:8',
             'longitude' => 'decimal:8',
         ];
