@@ -9,10 +9,11 @@ import {
     PencilSquareIcon,
     MapPinIcon,
     PlusIcon,
-    TrashIcon
+    TrashIcon,
+    EyeIcon,
+    EyeSlashIcon
 } from '@heroicons/react/24/outline';
 import { TableShimmer } from '../../components/common/Shimmer';
-import LocationPicker from '../../components/common/LocationPicker';
 import { useTheme } from '../../store/theme';
 
 interface Partner {
@@ -26,6 +27,7 @@ interface Partner {
     active_keys_count?: number;
     location_image?: string | null;
     unavailable_dates?: any[];
+    can_login?: boolean;
 }
 
 const PartnerList = () => {
@@ -42,6 +44,8 @@ const PartnerList = () => {
     const [total, setTotal] = useState(0);
     const [rangeFrom, setRangeFrom] = useState(0);
     const [rangeTo, setRangeTo] = useState(0);
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
     // View State
     const [view, setView] = useState<'list' | 'form'>('list');
@@ -51,6 +55,7 @@ const PartnerList = () => {
         business_name: '',
         email: '',
         password: '',
+        password_confirmation: '',
         phone: '',
         address: '',
         latitude: null as number | null,
@@ -65,7 +70,8 @@ const PartnerList = () => {
             Friday: { from: '10:00 AM', to: '10:00 PM' },
         },
         unavailable_dates: [] as { date: string; from: string; to: string; reason: string }[],
-        location_image: null as File | string | null
+        location_image: null as File | string | null,
+        can_login: true
     });
 
     useEffect(() => {
@@ -114,6 +120,19 @@ const PartnerList = () => {
         }
     };
 
+    const handleToggleLogin = async (partner: Partner) => {
+        try {
+            await api.put(`/admin/partners/${partner.id}`, {
+                can_login: !partner.can_login
+            });
+            showToast(`Partner login ${!partner.can_login ? 'enabled' : 'disabled'} successfully`, 'success');
+            fetchPartners();
+        } catch (error) {
+            console.error('Failed to toggle login permission', error);
+            showToast('Failed to update login permission', 'error');
+        }
+    };
+
     const handleAddClick = () => {
         setSelectedPartner(null);
         setFormData({
@@ -121,6 +140,7 @@ const PartnerList = () => {
             business_name: '',
             email: '',
             password: '',
+            password_confirmation: '',
             phone: '',
             address: '',
             latitude: null,
@@ -135,7 +155,8 @@ const PartnerList = () => {
                 Friday: { from: '10:00 AM', to: '10:00 PM' },
             },
             unavailable_dates: [],
-            location_image: null
+            location_image: null,
+            can_login: true
         });
         setView('form');
     };
@@ -147,6 +168,7 @@ const PartnerList = () => {
             business_name: partner.business_name || '',
             email: partner.email,
             password: '', // Don't show password
+            password_confirmation: '',
             phone: partner.phone || '',
             address: (partner as any).address || '',
             latitude: (partner as any).latitude || null,
@@ -161,7 +183,8 @@ const PartnerList = () => {
                 Friday: { from: '10:00 AM', to: '10:00 PM' },
             },
             unavailable_dates: (partner as any).unavailable_dates || [],
-            location_image: partner.location_image || null
+            location_image: partner.location_image || null,
+            can_login: partner.can_login ?? true
         });
         setView('form');
     };
@@ -200,7 +223,7 @@ const PartnerList = () => {
                     <h2 className="text-2xl font-bold text-primary">Add/Edit Partners</h2>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                
                     {/* Form Section */}
                     <div className="bg-primary p-8 rounded-[32px] shadow-sm border border-default space-y-8">
                         <div className="space-y-6">
@@ -213,6 +236,59 @@ const PartnerList = () => {
                             />
 
                             <Input
+                                label="Email"
+                                type="email"
+                                placeholder="partner@bumble.com"
+                                value={formData.email}
+                                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                                error={errors.email?.[0]}
+                            />
+
+                            <div className="space-y-2">
+                                <label className="block text-sm font-bold text-secondary">Password</label>
+                                <div className="relative">
+                                    <input
+                                        type={showPassword ? 'text' : 'password'}
+                                        className={`w-full px-4 py-3 border rounded-xl bg-secondary border-default focus:outline-none focus:ring-2 focus:ring-bumble-yellow focus:bg-primary transition-all text-sm text-primary ${errors.password?.[0] ? 'border-red-500' : ''}`}
+                                        placeholder="Enter password"
+                                        value={formData.password}
+                                        onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowPassword((prev) => !prev)}
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-secondary/60 hover:text-secondary"
+                                    >
+                                        {showPassword ? <EyeSlashIcon className="h-5 w-5" /> : <EyeIcon className="h-5 w-5" />}
+                                    </button>
+                                </div>
+                                {errors.password?.[0] && <p className="text-xs text-red-500">{errors.password[0]}</p>}
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="block text-sm font-bold text-secondary">Confirm Password</label>
+                                <div className="relative">
+                                    <input
+                                        type={showConfirmPassword ? 'text' : 'password'}
+                                        className={`w-full px-4 py-3 border rounded-xl bg-secondary border-default focus:outline-none focus:ring-2 focus:ring-bumble-yellow focus:bg-primary transition-all text-sm text-primary ${errors.password_confirmation?.[0] ? 'border-red-500' : ''}`}
+                                        placeholder="Confirm password"
+                                        value={formData.password_confirmation}
+                                        onChange={(e) => setFormData({ ...formData, password_confirmation: e.target.value })}
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowConfirmPassword((prev) => !prev)}
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-secondary/60 hover:text-secondary"
+                                    >
+                                        {showConfirmPassword ? <EyeSlashIcon className="h-5 w-5" /> : <EyeIcon className="h-5 w-5" />}
+                                    </button>
+                                </div>
+                                {errors.password_confirmation?.[0] && (
+                                    <p className="text-xs text-red-500">{errors.password_confirmation[0]}</p>
+                                )}
+                            </div>
+
+                            <Input
                                 label="Full Address"
                                 placeholder="Assigned"
                                 value={formData.address}
@@ -220,14 +296,14 @@ const PartnerList = () => {
                                 error={errors.address?.[0]}
                             />
 
-                            <LocationPicker
+                            {/* <LocationPicker
                                 latitude={formData.latitude}
                                 longitude={formData.longitude}
                                 onChange={(lat, lng) => setFormData({ ...formData, latitude: lat, longitude: lng })}
                                 error={errors.latitude?.[0] || errors.longitude?.[0]}
-                            />
+                            /> */}
 
-                            <div className="space-y-2">
+                            {/* <div className="space-y-2">
                                 <label className="block text-sm font-bold text-secondary">Location Image</label>
                                 <div className="flex items-center gap-4">
                                     {formData.location_image && (
@@ -256,42 +332,75 @@ const PartnerList = () => {
                                 {errors.location_image?.[0] && (
                                     <p className="text-xs text-red-500">{errors.location_image[0]}</p>
                                 )}
-                            </div>
+                            </div> */}
 
-                            <div className="space-y-4 pt-4 border-t border-default">
-                                <label className="block text-sm font-bold text-secondary">Partner's Availability</label>
-                                <div className="space-y-3">
+                            <div className="space-y-4 pt-4 border-t border-default w-full">
+                                <label className="block text-sm font-bold text-secondary">
+                                    Partner's Availability
+                                </label>
+
+                                <div className="space-y-3 w-full">
                                     {Object.entries(formData.availability).map(([day, times]) => (
-                                        <div key={day} className="flex items-center gap-4">
-                                            <span className="w-24 text-sm font-medium text-secondary">{day}</span>
-                                            <div className="flex items-center gap-3">
+                                        <div
+                                            key={day}
+                                            className="flex items-center gap-4 w-full"
+                                        >
+                                            {/* Day label */}
+                                            <span className="min-w-[96px] text-sm font-medium text-secondary">
+                                                {day}
+                                            </span>
+
+                                            {/* Time pickers container */}
+                                            <div className="flex items-center gap-3 flex-1">
                                                 <TimePicker
                                                     value={times.from}
-                                                    onChange={(val) => setFormData({
-                                                        ...formData,
-                                                        availability: {
-                                                            ...formData.availability,
-                                                            [day]: { ...times, from: val }
-                                                        }
-                                                    })}
-                                                    className="w-32"
+                                                    onChange={(val) =>
+                                                        setFormData({
+                                                            ...formData,
+                                                            availability: {
+                                                                ...formData.availability,
+                                                                [day]: { ...times, from: val },
+                                                            },
+                                                        })
+                                                    }
+                                                    className="flex-1"
                                                 />
-                                                <span className="text-sm font-medium text-secondary/60">to</span>
+
+                                                <span className="text-sm font-medium text-secondary/60">
+                                                    to
+                                                </span>
+
                                                 <TimePicker
                                                     value={times.to}
-                                                    onChange={(val) => setFormData({
-                                                        ...formData,
-                                                        availability: {
-                                                            ...formData.availability,
-                                                            [day]: { ...times, to: val }
-                                                        }
-                                                    })}
-                                                    className="w-32"
+                                                    onChange={(val) =>
+                                                        setFormData({
+                                                            ...formData,
+                                                            availability: {
+                                                                ...formData.availability,
+                                                                [day]: { ...times, to: val },
+                                                            },
+                                                        })
+                                                    }
+                                                    className="flex-1"
                                                 />
                                             </div>
                                         </div>
                                     ))}
                                 </div>
+                            </div>
+
+
+                            <div className="space-y-3 pt-4 border-t border-default">
+                                <label className="block text-sm font-bold text-secondary">Partner Can Login</label>
+                                <button
+                                    type="button"
+                                    onClick={() => setFormData({ ...formData, can_login: !formData.can_login })}
+                                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${formData.can_login ? 'bg-green-500' : isDarkMode ? 'bg-zinc-700' : 'bg-gray-200'}`}
+                                >
+                                    <span
+                                        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform shadow-sm ${formData.can_login ? 'translate-x-6' : 'translate-x-1'}`}
+                                    />
+                                </button>
                             </div>
 
                             <div className="space-y-4 pt-4 border-t border-default">
@@ -376,6 +485,12 @@ const PartnerList = () => {
                                         Object.entries(formData).forEach(([key, value]) => {
                                             if (key === 'availability' || key === 'unavailable_dates') {
                                                 data.append(key, JSON.stringify(value));
+                                            } else if (key === 'password' || key === 'password_confirmation') {
+                                                if (value) {
+                                                    data.append(key, value.toString());
+                                                }
+                                            } else if (key === 'can_login') {
+                                                data.append(key, value ? '1' : '0');
                                             } else if (key === 'location_image') {
                                                 if (value instanceof File) {
                                                     data.append(key, value);
@@ -415,7 +530,7 @@ const PartnerList = () => {
                                 Save Partner Details
                             </Button>
                             <Button
-                                variant="outline"
+                               
                                 onClick={() => setView('list')}
                                 className={`px-8 py-3 rounded-xl border-default ${isDarkMode ? 'hover:bg-zinc-800' : 'hover:bg-gray-50'}`}
                             >
@@ -424,23 +539,7 @@ const PartnerList = () => {
                         </div>
                     </div>
 
-                    {/* Map Section */}
-                    <div className="space-y-4">
-                        <label className="block text-sm font-bold text-secondary">Set Location on Google Map</label>
-                        <div className={`rounded-[32px] h-[600px] flex items-center justify-center border overflow-hidden relative shadow-inner ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-gray-100 border-gray-200'}`}>
-                            {/* Placeholder for Map */}
-                            <div className={`absolute inset-0 flex flex-col items-center justify-center gap-4 ${isDarkMode ? 'bg-zinc-900 text-zinc-500' : 'bg-gray-50 text-gray-400'}`}>
-                                <div className={`p-4 rounded-full shadow-sm ${isDarkMode ? 'bg-zinc-800' : 'bg-white'}`}>
-                                    <MapPinIcon className="h-8 w-8 text-bumble-yellow" />
-                                </div>
-                                <div className="text-center">
-                                    <p className={`font-bold ${isDarkMode ? 'text-zinc-300' : 'text-gray-600'}`}>Google Maps Integration</p>
-                                    <p className="text-sm mt-1">Click to set coordinates</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+               
             </div>
         );
     }
@@ -500,8 +599,9 @@ const PartnerList = () => {
             {/* List Header - Hidden on Mobile */}
             <div className="hidden lg:grid grid-cols-12 px-8 py-3 text-xs font-bold text-secondary uppercase tracking-wider">
                 <div className="col-span-3">Partner Name</div>
-                <div className="col-span-3">Partner Location</div>
+                <div className="col-span-2">Partner Location</div>
                 <div className="col-span-2 text-center">Partner Status</div>
+                <div className="col-span-1 text-center">Can Login</div>
                 <div className="col-span-2">Assigned BumbleHive</div>
                 <div className="col-span-1 text-center">Key Assigned</div>
                 <div className="col-span-1"></div>
@@ -528,7 +628,7 @@ const PartnerList = () => {
                                     <p className="text-xs text-secondary mt-0.5">{partner.business_name || 'N/A'}</p>
                                 </div>
 
-                                <div className="col-span-3 text-sm text-secondary pr-4">
+                                <div className="col-span-2 text-sm text-secondary pr-4">
                                     <span className="line-clamp-2">{(partner as any).address || 'N/A'}</span>
                                 </div>
 
@@ -539,6 +639,17 @@ const PartnerList = () => {
                                     >
                                         <span
                                             className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform shadow-sm ${partner.is_active ? 'translate-x-6' : 'translate-x-1'}`}
+                                        />
+                                    </button>
+                                </div>
+
+                                <div className="col-span-1 flex justify-center">
+                                    <button
+                                        onClick={() => handleToggleLogin(partner)}
+                                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${partner.can_login ? 'bg-green-500' : isDarkMode ? 'bg-zinc-700' : 'bg-gray-200'}`}
+                                    >
+                                        <span
+                                            className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform shadow-sm ${partner.can_login ? 'translate-x-6' : 'translate-x-1'}`}
                                         />
                                     </button>
                                 </div>
@@ -608,6 +719,18 @@ const PartnerList = () => {
                                                 {partner.active_keys_count || 0} Keys
                                             </span>
                                         </div>
+                                    </div>
+
+                                    <div className="pt-4 border-t border-default">
+                                        <p className="text-[10px] font-bold text-secondary uppercase tracking-wider mb-1">Can Login</p>
+                                        <button
+                                            onClick={() => handleToggleLogin(partner)}
+                                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${partner.can_login ? 'bg-green-500' : isDarkMode ? 'bg-zinc-700' : 'bg-gray-200'}`}
+                                        >
+                                            <span
+                                                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform shadow-sm ${partner.can_login ? 'translate-x-6' : 'translate-x-1'}`}
+                                            />
+                                        </button>
                                     </div>
 
                                     <div className="pt-4 border-t border-default">
