@@ -209,7 +209,7 @@ const HostList = () => {
                         className="flex items-center gap-2 px-6 py-2.5 rounded-lg"
                     >
                         <PlusIcon className="h-5 w-5 stroke-[3]" />
-                        <span>Add New Partner</span>
+                        <span>Add New Host</span>
                     </Button>
                 </div>
             </div>
@@ -483,7 +483,7 @@ const HostList = () => {
                                                 <div className="pt-4 flex gap-4">
                                                     <Button
                                                         type="button"
-                                                        variant="outline"
+                                                        
                                                         className="flex-1 py-3 rounded-xl font-bold"
                                                         onClick={() => setIsModalOpen(false)}
                                                     >

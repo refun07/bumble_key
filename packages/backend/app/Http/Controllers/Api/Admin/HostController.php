@@ -31,7 +31,7 @@ class HostController extends Controller
                 }
             ])
             ->latest()
-            ->paginate(2);
+            ->paginate(10);
 
         $hosts->getCollection()->transform(function ($host) {
             $host->package_types = $host->keys->pluck('package_type')->unique()->values()->all();

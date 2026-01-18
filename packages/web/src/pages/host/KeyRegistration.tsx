@@ -21,6 +21,8 @@ interface Hive {
     photos?: string[];
 }
 
+const APP_URL = import.meta.env.VITE_APP_URL;
+
 const KeyRegistration = () => {
     const { isDarkMode } = useTheme();
     const { showToast } = useToast();
@@ -280,7 +282,11 @@ const KeyRegistration = () => {
                                 <div className={`border rounded-2xl p-4 flex items-center gap-4 shadow-sm ${isDarkMode ? 'bg-zinc-800/50 border-zinc-700' : 'bg-white border-gray-100'}`}>
                                     <div className="w-20 h-20 rounded-xl overflow-hidden flex-shrink-0">
                                         <img
-                                            src={selectedHive.photos?.[0] || "/bumblehive_preview.png"}
+                                            src={
+                                                selectedHive.photos?.[0]
+                                                    ? `${APP_URL}/storage/${selectedHive.photos[0]}`
+                                                    : "/bumblehive_preview.png"
+                                            }
                                             alt={selectedHive.name}
                                             className="w-full h-full object-cover"
                                         />
@@ -386,7 +392,7 @@ const KeyRegistration = () => {
                                                 <div className="pt-6 flex gap-4">
                                                     <Button
                                                         type="button"
-                                                        variant="outline"
+                                                       
                                                         className="flex-1 py-3 rounded-xl font-bold"
                                                         onClick={() => setIsPropertyModalOpen(false)}
                                                     >
