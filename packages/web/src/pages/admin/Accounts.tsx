@@ -132,18 +132,19 @@ const Accounts = () => {
                     <p className="text-xs font-bold text-secondary uppercase tracking-wider">Net Income</p>
                     <p className="text-3xl font-bold text-primary mt-1">{formatCurrency(stats.net_income)}</p>
                 </div>
+            </div>
 
-
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Filters */}
                 <div className="bg-primary p-6 rounded-3xl border border-default shadow-sm">
-                    <form onSubmit={handleSearch} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 items-end">
-                        <div className="lg:col-span-2">
+                    <form onSubmit={handleSearch} className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
+                        <div className="md:col-span-2">
                             <div className="relative">
                                 <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                                 <input
                                     type="text"
                                     placeholder="Search transactions..."
-                                    className={`pl-10 pr-4 py-2 border rounded-xl focus:ring-2 focus:ring-bumble-yellow/20 focus:border-bumble-yellow outline-none w-64 transition-all ${isDarkMode ? 'bg-zinc-800 border-zinc-700 text-white placeholder-zinc-500' : 'bg-white border-gray-200 text-gray-900 placeholder-gray-400'}`}
+                                    className={`pl-10 pr-4 py-2 border rounded-xl focus:ring-2 focus:ring-bumble-yellow/20 focus:border-bumble-yellow outline-none w-full transition-all ${isDarkMode ? 'bg-zinc-800 border-zinc-700 text-white placeholder-zinc-500' : 'bg-white border-gray-200 text-gray-900 placeholder-gray-400'}`}
                                     value={filters.search}
                                     onChange={(e) => handleFilterChange('search', e.target.value)}
                                 />
@@ -177,7 +178,7 @@ const Accounts = () => {
                                 <option value="refunded">Refunded</option>
                             </select>
                         </div>
-                        <Button type="submit" variant="bumble" className="w-full">
+                        <Button type="submit" variant="bumble" className="w-full md:col-span-2">
                             <FunnelIcon className="w-5 h-5 mr-2" />
                             Filter
                         </Button>
