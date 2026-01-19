@@ -57,7 +57,7 @@ const HiveMapPicker = ({ hives, selectedHiveId, onSelect }: Props) => {
             : [51.5074, -0.1278]; // London fallback
 
     return (
-        <div className="h-[300px] w-full rounded-xl overflow-hidden border border-default">
+        <div className="hive-map-picker h-[300px] w-full rounded-xl overflow-hidden border border-default">
             <MapContainer
                 center={center}
                 zoom={13}

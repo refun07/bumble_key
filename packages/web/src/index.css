@@ -295,3 +295,8 @@ html {
 .border-default {
     border-color: var(--border-color);
 }
+
+/* Keep Leaflet controls below combobox dropdowns */
+.hive-map-picker .leaflet-control {
+    z-index: 200;
+}

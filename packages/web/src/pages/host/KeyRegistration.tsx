@@ -112,7 +112,7 @@ const KeyRegistration = () => {
                 const fetchedProperties = propsRes.data.data || [];
                 const fetchedHives = hivesRes;
 
-                console.log(fetchedProperties);
+                console.log(fetchedHives);
 
                 setProperties(fetchedProperties);
                 setHives(fetchedHives);
@@ -371,7 +371,7 @@ const KeyRegistration = () => {
                                         placeholder="Select a BumbleHive (Optional)"
                                     />
                                     {filteredHives.length > 0 && (
-                                        <Combobox.Options className={`absolute z-10 mt-2 max-h-60 w-full overflow-auto rounded-xl border shadow-lg ${isDarkMode ? 'bg-zinc-900 border-zinc-700 text-white' : 'bg-white border-gray-200 text-gray-900'}`}>
+                                        <Combobox.Options className={`absolute z-[1000] mt-2 max-h-60 w-full overflow-auto rounded-xl border shadow-lg ${isDarkMode ? 'bg-zinc-900 border-zinc-700 text-white' : 'bg-white border-gray-200 text-gray-900'}`}>
                                             {filteredHives.map((hive) => (
                                                 <Combobox.Option
                                                     key={hive.id}
@@ -392,7 +392,7 @@ const KeyRegistration = () => {
                             </Combobox>
 
                             {selectedHive && (
-                                <div className={`border rounded-2xl p-4 flex items-center gap-4 shadow-sm ${isDarkMode ? 'bg-zinc-800/50 border-zinc-700' : 'bg-white border-gray-100'}`}>
+                                <div className={`border  relative  rounded-2xl z-999999 p-4 flex items-center gap-4 shadow-sm ${isDarkMode ? 'bg-zinc-800/50 border-zinc-700' : 'bg-white border-gray-100'}`}>
                                     <div className="w-20 h-20 rounded-xl overflow-hidden flex-shrink-0">
                                         <img
                                             src={
@@ -411,22 +411,24 @@ const KeyRegistration = () => {
                                 </div>
                             )}
                         
+                
 
-                            {hives.length > 0 && (
-                                <div className="mt-10">
-                                    <HiveMapPicker
-                                        hives={hives}
-                                        selectedHiveId={selectedHive?.id}
-                                        onSelect={(hive) => {
-                                            setSelectedHive(hive);
-                                            setFormData(prev => ({
-                                                ...prev,
-                                                hive_id: hive.id.toString(),
-                                            }));
-                                        }}
-                                    />
-                                </div>
-                            )}
+                          {hives.length > 0 && (
+    <div className="mt-10 relative z-0">
+        <HiveMapPicker
+            hives={hives}
+            selectedHiveId={selectedHive?.id}
+            onSelect={(hive) => {
+                setSelectedHive(hive);
+                setFormData(prev => ({
+                    ...prev,
+                    hive_id: hive.id.toString(),
+                }));
+            }}
+        />
+    </div>
+)}
+
 
                         </div>
                     </div>
