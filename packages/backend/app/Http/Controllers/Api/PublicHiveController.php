@@ -10,8 +10,7 @@ class PublicHiveController extends Controller
 {
     public function index(Request $request)
     {
-        $hives = Hive::where('status', 'active')
-            ->select([
+        $hives = Hive::select([
                 'id',
                 'name',
                 'location_name',

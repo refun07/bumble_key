@@ -240,17 +240,32 @@ const HostKeyList = () => {
                     <p className="text-sm text-secondary">
                         Showing page {currentPage} of {lastPage} ({totalKeys} total)
                     </p>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap justify-center">
                         <Button
-                            variant="outline"
+                           
                             className="px-4 py-2"
                             onClick={() => fetchData(currentPage - 1)}
                             disabled={currentPage === 1}
                         >
                             Previous
                         </Button>
+                        {Array.from({ length: lastPage }, (_, index) => {
+                            const page = index + 1;
+                            const isActive = page === currentPage;
+                            return (
+                                <Button
+                                    key={page}
+                                   
+                                    className="px-4 py-2"
+                                    onClick={() => fetchData(page)}
+                                    disabled={isActive}
+                                >
+                                    {page}
+                                </Button>
+                            );
+                        })}
                         <Button
-                            variant="outline"
+                            
                             className="px-4 py-2"
                             onClick={() => fetchData(currentPage + 1)}
                             disabled={currentPage === lastPage}

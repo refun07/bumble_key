@@ -44,7 +44,7 @@ class KeyController extends Controller
 
         $perPage = (int) $request->get('per_page', 10);
         $perPage = $perPage > 0 ? $perPage : 10;
-        $keys = $query->paginate($perPage);
+        $keys = $query->paginate(2);
 
         return response()->json($keys);
     }
