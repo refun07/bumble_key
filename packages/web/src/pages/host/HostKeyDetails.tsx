@@ -92,6 +92,27 @@ const HostKeyDetails = () => {
     }
 
     const currentHive = key.current_assignment?.cell?.hive;
+    const isKeyInUse = key.current_assignment?.state === 'picked_up' || key.current_assignment?.state === 'in_use';
+
+    const handleDelete = async () => {
+        if (isKeyInUse) {
+            window.alert('Key is currently in use and cannot be deleted.');
+            return;
+        }
+
+        const confirmed = window.confirm('Are you sure you want to delete this key? This action cannot be undone.');
+        if (!confirmed) {
+            return;
+        }
+
+        try {
+            await api.delete(`/hosts/keys/${key.id}`);
+            navigate('/host/keys');
+        } catch (error) {
+            console.error('Failed to delete key', error);
+            window.alert('Failed to delete key.');
+        }
+    };
 
     // Helper to format operating hours
     const formatOperatingHours = (hours: any) => {
@@ -166,11 +187,19 @@ const HostKeyDetails = () => {
                             <p className="text-2xl font-bold text-primary">{key.label}</p>
                         </div>
                         <div className="flex gap-2">
-                            <button className="p-2 hover:bg-secondary rounded-lg transition-colors">
+                            <button
+                                className="p-2 hover:bg-secondary rounded-lg transition-colors"
+                                onClick={() => navigate(`/host/keys/${key.id}/edit`)}
+                            >
                                 <PencilIcon className="h-5 w-5 text-secondary" />
                             </button>
-                            <button className="p-2 hover:bg-secondary rounded-lg transition-colors">
-                                <TrashIcon className="h-5 w-5 text-secondary" />
+                            <button
+                                className="p-2 hover:bg-secondary rounded-lg transition-colors"
+                                onClick={handleDelete}
+                                disabled={isKeyInUse}
+                                title={isKeyInUse ? 'Key is in use' : 'Delete key'}
+                            >
+                                <TrashIcon className={`h-5 w-5 ${isKeyInUse ? 'text-gray-300' : 'text-secondary'}`} />
                             </button>
                         </div>
                     </div>

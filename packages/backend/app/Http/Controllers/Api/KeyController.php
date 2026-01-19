@@ -13,10 +13,38 @@ class KeyController extends Controller
 {
     public function index(Request $request)
     {
-        $keys = $request->user()->keys()
+        $request->validate([
+            'status' => 'sometimes|in:created,assigned,deposited,available,picked_up,returned,closed,dispute,all',
+        ]);
+
+        $query = $request->user()->keys()
             ->with(['property', 'currentAssignment.cell.hive'])
-            ->latest()
-            ->paginate(10);
+            ->latest();
+
+        if ($request->filled('status') && $request->status !== 'all') {
+            $query->where('status', $request->status);
+        }
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('label', 'like', "%{$search}%")
+                    ->orWhereHas('property', function ($propertyQuery) use ($search) {
+                        $propertyQuery->where('address', 'like', "%{$search}%")
+                            ->orWhere('title', 'like', "%{$search}%");
+                    });
+            });
+        }
+
+        if ($request->filled('hive_id')) {
+            $query->whereHas('currentAssignment', function ($assignmentQuery) use ($request) {
+                $assignmentQuery->where('hive_id', $request->hive_id);
+            });
+        }
+
+        $perPage = (int) $request->get('per_page', 10);
+        $perPage = $perPage > 0 ? $perPage : 10;
+        $keys = $query->paginate($perPage);
 
         return response()->json($keys);
     }
@@ -95,16 +123,44 @@ class KeyController extends Controller
         $key = $request->user()->keys()->findOrFail($id);
 
         $validated = $request->validate([
-            'label' => 'sometimes|string|max:255',
-            'package_type' => 'sometimes|in:weekly,monthly,pay_per_use',
+            'property_id' => 'sometimes|required|exists:properties,id',
+            'label' => 'sometimes|required|string|max:255',
+            'key_type' => 'sometimes|required|in:master,duplicate,spare',
+            'package_type' => 'sometimes|required|in:weekly,monthly,yearly,pay_per_use',
+            'description' => 'nullable|string',
             'notes' => 'nullable|string',
+            'photo' => 'nullable|string',
         ]);
+
+        if (isset($validated['property_id'])) {
+            $request->user()->properties()->findOrFail($validated['property_id']);
+        }
 
         $key->update($validated);
 
         return response()->json([
             'message' => 'Key updated successfully',
             'data' => $key,
+        ]);
+    }
+
+    public function destroy(Request $request, $id)
+    {
+        $key = $request->user()->keys()
+            ->with('currentAssignment')
+            ->findOrFail($id);
+
+        $blockedStates = ['picked_up', 'in_use'];
+        if ($key->currentAssignment && in_array($key->currentAssignment->state, $blockedStates, true)) {
+            return response()->json([
+                'message' => 'Key is currently in use and cannot be deleted.',
+            ], 422);
+        }
+
+        $key->delete();
+
+        return response()->json([
+            'message' => 'Key deleted successfully',
         ]);
     }
 }

@@ -3,6 +3,7 @@ import { useTheme } from '../../store/theme';
 import { Link } from 'react-router-dom';
 import api from '../../services/api';
 import Button from '../../components/common/Button';
+
 import {
     MagnifyingGlassIcon,
     PencilIcon,
@@ -29,35 +30,79 @@ interface Key {
     };
 }
 
+interface Hive {
+    id: number;
+    name: string;
+    location_name?: string;
+    address?: string;
+}
+
 const HostKeyList = () => {
     const { isDarkMode } = useTheme();
     const [keys, setKeys] = useState<Key[]>([]);
+    const [hives, setHives] = useState<Hive[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [search, setSearch] = useState('');
     const [statusFilter, setStatusFilter] = useState('all');
+    const [hiveFilter, setHiveFilter] = useState('all');
+    const [currentPage, setCurrentPage] = useState(1);
+    const [lastPage, setLastPage] = useState(1);
+    const [totalKeys, setTotalKeys] = useState(0);
 
-    useEffect(() => {
-        fetchKeys();
-    }, []);
+    const statusOptions = [
+        { value: 'all', label: 'All Status' },
+        { value: 'created', label: 'Created' },
+        { value: 'assigned', label: 'Assigned' },
+        { value: 'deposited', label: 'Deposited' },
+        { value: 'available', label: 'Available' },
+        { value: 'picked_up', label: 'Picked Up' },
+        { value: 'returned', label: 'Returned' },
+        { value: 'closed', label: 'Closed' },
+        { value: 'dispute', label: 'Dispute' }
+    ];
 
-    const fetchKeys = async () => {
+    const fetchData = async (page = currentPage) => {
         setIsLoading(true);
         try {
-            const response = await api.get('/hosts/keys');
-            setKeys(response.data.data);
+            const [keysResponse, hivesResponse] = await Promise.all([
+                api.get('/hosts/keys', {
+                    params: {
+                        page,
+                        search: search || undefined,
+                        status: statusFilter !== 'all' ? statusFilter : undefined,
+                        hive_id: hiveFilter !== 'all' ? hiveFilter : undefined
+                    }
+                }),
+                api.get('/hives/public')
+            ]);
+
+            setKeys(keysResponse.data.data);
+            setCurrentPage(keysResponse.data.current_page || 1);
+            setLastPage(keysResponse.data.last_page || 1);
+            setTotalKeys(keysResponse.data.total || 0);
+            const hiveList = hivesResponse.data.data || hivesResponse.data || [];
+            setHives(hiveList);
         } catch (error) {
-            console.error('Failed to fetch keys', error);
+            console.error('Failed to fetch keys or hives', error);
         } finally {
             setIsLoading(false);
         }
     };
 
-    const filteredKeys = keys.filter(key => {
-        const matchesSearch = key.label.toLowerCase().includes(search.toLowerCase()) ||
-            key.property?.address.toLowerCase().includes(search.toLowerCase());
-        const matchesStatus = statusFilter === 'all' || key.status === statusFilter;
-        return matchesSearch && matchesStatus;
-    });
+    useEffect(() => {
+        const timeout = setTimeout(() => {
+            setCurrentPage(1);
+            fetchData(1);
+        }, 300);
+
+        return () => clearTimeout(timeout);
+    }, [search, statusFilter, hiveFilter]);
+
+    const formatStatus = (status: string) =>
+        status
+            .split('_')
+            .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+            .join(' ');
 
     const getStatusDisplay = (key: Key) => {
         const state = key.current_assignment?.state;
@@ -102,22 +147,34 @@ const HostKeyList = () => {
                             value={statusFilter}
                             onChange={(e) => setStatusFilter(e.target.value)}
                         >
-                            <option value="all">All Status</option>
-                            <option value="active">Active</option>
-                            <option value="inactive">Inactive</option>
+                            {statusOptions.map((option) => (
+                                <option key={option.value} value={option.value}>
+                                    {option.label}
+                                </option>
+                            ))}
                         </select>
                     </div>
 
                     <div className="flex items-center gap-2">
                         <span className="text-xs font-bold text-secondary uppercase tracking-wider whitespace-nowrap">BumbleHive</span>
-                        <select className={`px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-bumble-yellow/20 transition-all shadow-sm text-sm font-medium min-w-[200px] ${isDarkMode ? 'bg-zinc-800 border-zinc-700 text-white' : 'bg-white border-gray-100 text-gray-900'}`}>
-                            <option>Melbourne - Ezymart Carlton...</option>
+                        <select
+                            className={`px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-bumble-yellow/20 transition-all shadow-sm text-sm font-medium min-w-[200px] ${isDarkMode ? 'bg-zinc-800 border-zinc-700 text-white' : 'bg-white border-gray-100 text-gray-900'}`}
+                            value={hiveFilter}
+                            onChange={(e) => setHiveFilter(e.target.value)}
+                        >
+                            <option value="all">All BumbleHives</option>
+                            {hives.map((hive) => (
+                                <option key={hive.id} value={hive.id}>
+                                    {hive.name}
+                                    {hive.location_name ? ` - ${hive.location_name}` : ''}
+                                </option>
+                            ))}
                         </select>
                     </div>
 
                     <Button
                         variant="outline"
-                        onClick={() => { setSearch(''); setStatusFilter('all'); }}
+                        onClick={() => { setSearch(''); setStatusFilter('all'); setHiveFilter('all'); setCurrentPage(1); }}
                         className="px-6 py-3 whitespace-nowrap"
                     >
                         Reset Filters
@@ -132,7 +189,7 @@ const HostKeyList = () => {
             </div>
 
             <div className="space-y-3">
-                {filteredKeys.map((key) => (
+                {keys.map((key) => (
                     <Link
                         key={key.id}
                         to={`/host/keys/${key.id}`}
@@ -142,7 +199,7 @@ const HostKeyList = () => {
                             <div className="md:col-span-2 font-bold text-primary text-sm">{key.label}</div>
 
                             <div className="md:col-span-2 text-sm text-secondary">
-                                {key.status === 'active' ? 'Active' : 'Inactive'}
+                                {formatStatus(key.status)}
                             </div>
 
                             <div className="md:col-span-3 text-sm text-primary font-medium">
@@ -162,7 +219,7 @@ const HostKeyList = () => {
                     </Link>
                 ))}
 
-                {filteredKeys.length === 0 && (
+                {keys.length === 0 && (
                     <div className={`rounded-3xl border p-20 text-center ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-gray-100'}`}>
                         <div className={`w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 ${isDarkMode ? 'bg-zinc-800' : 'bg-gray-50'}`}>
                             <ArrowPathIcon className="h-10 w-10 text-gray-300" />
@@ -177,6 +234,32 @@ const HostKeyList = () => {
                     </div>
                 )}
             </div>
+
+            {lastPage > 1 && (
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <p className="text-sm text-secondary">
+                        Showing page {currentPage} of {lastPage} ({totalKeys} total)
+                    </p>
+                    <div className="flex items-center gap-2">
+                        <Button
+                            variant="outline"
+                            className="px-4 py-2"
+                            onClick={() => fetchData(currentPage - 1)}
+                            disabled={currentPage === 1}
+                        >
+                            Previous
+                        </Button>
+                        <Button
+                            variant="outline"
+                            className="px-4 py-2"
+                            onClick={() => fetchData(currentPage + 1)}
+                            disabled={currentPage === lastPage}
+                        >
+                            Next
+                        </Button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

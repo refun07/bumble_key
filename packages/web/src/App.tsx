@@ -149,6 +149,7 @@ function App() {
           <Route path="dashboard" element={<React.Suspense fallback={<AppLoader/>}><HostDashboard /></React.Suspense>} />
           <Route path="keys" element={<HostKeyList />} />
           <Route path="keys/new" element={<KeyRegistration />} />
+          <Route path="keys/:id/edit" element={<KeyRegistration />} />
           <Route path="keys/:id" element={<HostKeyDetailsHost />} />
           <Route path="keys/:id/collection" element={<CollectionCodeView />} />
           <Route path="keys/:id/codes" element={<ViewCodes />} />

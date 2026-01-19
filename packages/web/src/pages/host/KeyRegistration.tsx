@@ -1,12 +1,12 @@
 import { useEffect, useState, useRef, Fragment } from 'react';
 import { useTheme } from '../../store/theme';
-import { useNavigate } from 'react-router-dom';
-import { Dialog, Transition } from '@headlessui/react';
+import { useNavigate, useParams, Link } from 'react-router-dom';
+import { Combobox, Dialog, Transition } from '@headlessui/react';
 import api from '../../services/api';
 import { useToast } from '../../store/toast';
 import Button from '../../components/common/Button';
 import Input from '../../components/common/Input';
-import { XMarkIcon, PlusIcon } from '@heroicons/react/24/outline';
+import { XMarkIcon, PlusIcon, ChevronLeftIcon } from '@heroicons/react/24/outline';
 
 interface Property {
     id: number;
@@ -21,12 +21,28 @@ interface Hive {
     photos?: string[];
 }
 
+interface KeyData {
+    id: number;
+    label: string;
+    description: string | null;
+    key_type: string;
+    package_type: string;
+    notes: string | null;
+    property_id: number;
+    photo: string | null;
+    current_assignment?: {
+        hive_id?: number;
+    };
+}
+
 const APP_URL = import.meta.env.VITE_APP_URL;
 
 const KeyRegistration = () => {
     const { isDarkMode } = useTheme();
     const { showToast } = useToast();
     const navigate = useNavigate();
+    const { id } = useParams<{ id: string }>();
+    const isEdit = Boolean(id);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
@@ -34,6 +50,7 @@ const KeyRegistration = () => {
 
     const [properties, setProperties] = useState<Property[]>([]);
     const [hives, setHives] = useState<Hive[]>([]);
+    const [hiveQuery, setHiveQuery] = useState('');
     const [selectedHive, setSelectedHive] = useState<Hive | null>(null);
     const [fileName, setFileName] = useState('');
 
@@ -60,27 +77,76 @@ const KeyRegistration = () => {
     });
 
     useEffect(() => {
+        const fetchAllHives = async () => {
+            const allHives: Hive[] = [];
+            let page = 1;
+            let hasNextPage = true;
+
+            while (hasNextPage) {
+                // eslint-disable-next-line no-await-in-loop
+                const response = await api.get('/hives', { params: { page } });
+                const data = response.data;
+                allHives.push(...(data.data || []));
+                hasNextPage = Boolean(data.next_page_url);
+                page += 1;
+            }
+
+            return allHives;
+        };
+
         const fetchData = async () => {
             try {
-                const [propsRes, hivesRes] = await Promise.all([
-                    api.get('/hosts/properties'),
-                    api.get('/hives')
+                const propsPromise = api.get('/hosts/properties');
+                const hivesPromise = fetchAllHives();
+                const keyPromise = id ? api.get(`/hosts/keys/${id}`) : Promise.resolve(null);
+
+                const [propsRes, hivesRes, keyRes] = await Promise.all([
+                    propsPromise,
+                    hivesPromise,
+                    keyPromise
                 ]);
                 const fetchedProperties = propsRes.data.data || [];
-                const fetchedHives = hivesRes.data.data || [];
+                const fetchedHives = hivesRes;
 
                 setProperties(fetchedProperties);
                 setHives(fetchedHives);
 
-                // Set initial property if available and not already set
-                if (fetchedProperties.length > 0 && !formData.property_id) {
-                    setFormData(prev => ({ ...prev, property_id: fetchedProperties[0].id.toString() }));
-                }
+                if (keyRes?.data?.data) {
+                    const keyData: KeyData = keyRes.data.data;
+                    setFormData({
+                        property_id: keyData.property_id.toString(),
+                        label: keyData.label,
+                        key_type: keyData.key_type,
+                        package_type: keyData.package_type,
+                        description: keyData.description || '',
+                        notes: keyData.notes || '',
+                        hive_id: keyData.current_assignment?.hive_id?.toString() || '',
+                        photo: keyData.photo || ''
+                    });
 
-                // Set initial hive if available and not already set
-                if (fetchedHives.length > 0 && !formData.hive_id) {
-                    setSelectedHive(fetchedHives[0]);
-                    setFormData(prev => ({ ...prev, hive_id: fetchedHives[0].id.toString() }));
+                    if (keyData.photo) {
+                        setFileName('Current image');
+                    }
+
+                    if (keyData.current_assignment?.hive_id) {
+                        const matchedHive = fetchedHives.find(
+                            (hive: Hive) => hive.id === keyData.current_assignment?.hive_id
+                        );
+                        if (matchedHive) {
+                            setSelectedHive(matchedHive);
+                        }
+                    }
+                } else {
+                    // Set initial property if available and not already set
+                    if (fetchedProperties.length > 0 && !formData.property_id) {
+                        setFormData(prev => ({ ...prev, property_id: fetchedProperties[0].id.toString() }));
+                    }
+
+                    // Set initial hive if available and not already set
+                    if (fetchedHives.length > 0 && !formData.hive_id) {
+                        setSelectedHive(fetchedHives[0]);
+                        setFormData(prev => ({ ...prev, hive_id: fetchedHives[0].id.toString() }));
+                    }
                 }
             } catch (error) {
                 console.error('Failed to fetch data', error);
@@ -90,7 +156,7 @@ const KeyRegistration = () => {
             }
         };
         fetchData();
-    }, []);
+    }, [id]);
 
     const handleHiveChange = (hiveId: string) => {
         const hive = hives.find(h => h.id.toString() === hiveId);
@@ -102,6 +168,14 @@ const KeyRegistration = () => {
             setFormData({ ...formData, hive_id: '' });
         }
     };
+
+    const filteredHives = hiveQuery.trim().length === 0
+        ? hives
+        : hives.filter((hive) => {
+            const query = hiveQuery.toLowerCase();
+            return hive.name.toLowerCase().includes(query)
+                || hive.address.toLowerCase().includes(query);
+        });
 
     const handleAddProperty = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -149,15 +223,20 @@ const KeyRegistration = () => {
         setErrors({});
         
         try {
-            await api.post('/hosts/keys', formData);
-            showToast('Key registered successfully', 'success');
+            if (isEdit) {
+                await api.put(`/hosts/keys/${id}`, formData);
+                showToast('Key updated successfully', 'success');
+            } else {
+                await api.post('/hosts/keys', formData);
+                showToast('Key registered successfully', 'success');
+            }
             navigate('/host/keys');
         } catch (error: any) {
             if (error.response?.status === 422) {
                 setErrors(error.response.data.errors);
                 showToast('Please check the form for errors', 'error');
             } else {
-                showToast('Failed to register key', 'error');
+                showToast(isEdit ? 'Failed to update key' : 'Failed to register key', 'error');
             }
         } finally {
             setIsSaving(false);
@@ -176,8 +255,12 @@ const KeyRegistration = () => {
         <div className={`min-h-screen py-12 px-4 sm:px-6 lg:px-8 ${isDarkMode ? 'bg-zinc-950' : 'bg-[#F8F9FB]'}`}>
             <div className={`max-w-xl mx-auto rounded-[40px] shadow-sm border p-12 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-gray-100'}`}>
                 <div className="text-left mb-10">
+                    <Link to="/host/keys" className="inline-flex items-center gap-2 text-sm font-bold text-secondary hover:text-primary mb-4">
+                        <ChevronLeftIcon className="h-4 w-4" />
+                        Back to list
+                    </Link>
                     <h2 className="text-3xl font-bold text-primary">
-                        Register Your Key
+                        {isEdit ? 'Edit Key' : 'Register Your Key'}
                     </h2>
                 </div>
 
@@ -267,16 +350,37 @@ const KeyRegistration = () => {
 
                         <div>
                             <label className="block text-sm font-bold text-primary mb-2">BumbleHive</label>
-                            <select
-                                className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-bumble-yellow transition-all text-sm mb-4 ${isDarkMode ? 'bg-zinc-800 border-zinc-700 text-white focus:bg-zinc-900' : 'bg-gray-50/50 border-gray-200 focus:bg-white'}`}
-                                value={formData.hive_id}
-                                onChange={(e) => handleHiveChange(e.target.value)}
+                            <Combobox
+                                value={selectedHive}
+                                onChange={(hive: Hive | null) => handleHiveChange(hive?.id?.toString() || '')}
                             >
-                                <option value="">Select a BumbleHive (Optional)</option>
-                                {hives.map(hive => (
-                                    <option key={hive.id} value={hive.id}>{hive.name}</option>
-                                ))}
-                            </select>
+                                <div className="relative mb-4">
+                                    <Combobox.Input
+                                        className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-bumble-yellow transition-all text-sm ${isDarkMode ? 'bg-zinc-800 border-zinc-700 text-white placeholder-zinc-500' : 'bg-gray-50/50 border-gray-200 placeholder-gray-400'}`}
+                                        displayValue={(hive: Hive | null) => hive?.name || ''}
+                                        onChange={(event) => setHiveQuery(event.target.value)}
+                                        placeholder="Select a BumbleHive (Optional)"
+                                    />
+                                    {filteredHives.length > 0 && (
+                                        <Combobox.Options className={`absolute z-10 mt-2 max-h-60 w-full overflow-auto rounded-xl border shadow-lg ${isDarkMode ? 'bg-zinc-900 border-zinc-700 text-white' : 'bg-white border-gray-200 text-gray-900'}`}>
+                                            {filteredHives.map((hive) => (
+                                                <Combobox.Option
+                                                    key={hive.id}
+                                                    value={hive}
+                                                    className={({ active }) =>
+                                                        `cursor-pointer px-4 py-2 text-sm ${active ? 'bg-bumble-yellow text-bumble-black' : ''}`
+                                                    }
+                                                >
+                                                    <div className="font-medium">{hive.name}</div>
+                                                    <div className={`text-xs ${isDarkMode ? 'text-zinc-400' : 'text-gray-500'}`}>
+                                                        {hive.address}
+                                                    </div>
+                                                </Combobox.Option>
+                                            ))}
+                                        </Combobox.Options>
+                                    )}
+                                </div>
+                            </Combobox>
 
                             {selectedHive && (
                                 <div className={`border rounded-2xl p-4 flex items-center gap-4 shadow-sm ${isDarkMode ? 'bg-zinc-800/50 border-zinc-700' : 'bg-white border-gray-100'}`}>
@@ -307,7 +411,7 @@ const KeyRegistration = () => {
                             className="w-full py-4 text-lg"
                             isLoading={isSaving}
                         >
-                            Save Key Details
+                            {isEdit ? 'Update Key Details' : 'Save Key Details'}
                         </Button>
                     </div>
                 </form>
