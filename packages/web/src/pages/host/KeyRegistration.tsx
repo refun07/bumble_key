@@ -7,6 +7,8 @@ import { useToast } from '../../store/toast';
 import Button from '../../components/common/Button';
 import Input from '../../components/common/Input';
 import { XMarkIcon, PlusIcon, ChevronLeftIcon } from '@heroicons/react/24/outline';
+import HiveMapPicker from '../../components/maps/HiveMapPicker';
+
 
 interface Property {
     id: number;
@@ -19,6 +21,8 @@ interface Hive {
     name: string;
     address: string;
     photos?: string[];
+    latitude: number;
+    longitude: number;
 }
 
 interface KeyData {
@@ -107,6 +111,8 @@ const KeyRegistration = () => {
                 ]);
                 const fetchedProperties = propsRes.data.data || [];
                 const fetchedHives = hivesRes;
+
+                console.log(fetchedProperties);
 
                 setProperties(fetchedProperties);
                 setHives(fetchedHives);
@@ -300,7 +306,10 @@ const KeyRegistration = () => {
                             <select
                                 className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-bumble-yellow transition-all text-sm ${isDarkMode ? 'bg-zinc-800 border-zinc-700 text-white focus:bg-zinc-900' : 'bg-gray-50/50 border-gray-200 focus:bg-white'}`}
                                 value={formData.property_id}
-                                onChange={(e) => setFormData({ ...formData, property_id: e.target.value })}
+                                onChange={(e) => {
+                                    console.log('Property changed:', e.target.value);
+                                    setFormData({ ...formData, property_id: e.target.value });
+                                }}
                                 required
                             >
                                 <option value="">Select a property</option>
@@ -401,6 +410,24 @@ const KeyRegistration = () => {
                                     </div>
                                 </div>
                             )}
+                        
+
+                            {hives.length > 0 && (
+                                <div className="mt-10">
+                                    <HiveMapPicker
+                                        hives={hives}
+                                        selectedHiveId={selectedHive?.id}
+                                        onSelect={(hive) => {
+                                            setSelectedHive(hive);
+                                            setFormData(prev => ({
+                                                ...prev,
+                                                hive_id: hive.id.toString(),
+                                            }));
+                                        }}
+                                    />
+                                </div>
+                            )}
+
                         </div>
                     </div>
 

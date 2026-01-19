@@ -42,9 +42,11 @@ class KeyController extends Controller
             });
         }
 
-        $perPage = (int) $request->get('per_page', 10);
-        $perPage = $perPage > 0 ? $perPage : 10;
-        $keys = $query->paginate(2);
+        $pageLength=10;
+
+        $perPage = (int) $request->get('per_page', $pageLength);
+        $perPage = $perPage > 0 ? $perPage : $pageLength;
+        $keys = $query->paginate($perPage);
 
         return response()->json($keys);
     }
