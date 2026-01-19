@@ -132,17 +132,41 @@ class KeyController extends Controller
             'description' => 'nullable|string',
             'notes' => 'nullable|string',
             'photo' => 'nullable|string',
+            'hive_id' => 'nullable|exists:hives,id',
         ]);
 
         if (isset($validated['property_id'])) {
             $request->user()->properties()->findOrFail($validated['property_id']);
         }
 
+        $hiveId = $validated['hive_id'] ?? null;
+        if (array_key_exists('hive_id', $validated)) {
+            unset($validated['hive_id']);
+        }
+
         $key->update($validated);
+
+        if (!empty($hiveId)) {
+            $hive = Hive::findOrFail($hiveId);
+            $currentAssignment = $key->currentAssignment;
+
+            if (!$currentAssignment || $currentAssignment->hive_id !== $hive->id) {
+                $key->assignments()->create([
+                    'hive_id' => $hive->id,
+                    'host_id' => $request->user()->id,
+                    'partner_id' => $hive->partner_id,
+                    'state' => 'pending_drop',
+                    'drop_off_code' => strtoupper(Str::random(6)),
+                    'pickup_code' => strtoupper(Str::random(6)),
+                ]);
+
+                $key->update(['status' => 'assigned']);
+            }
+        }
 
         return response()->json([
             'message' => 'Key updated successfully',
-            'data' => $key,
+            'data' => $key->load('currentAssignment'),
         ]);
     }
 

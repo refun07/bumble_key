@@ -307,7 +307,6 @@ const KeyRegistration = () => {
                                 className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-bumble-yellow transition-all text-sm ${isDarkMode ? 'bg-zinc-800 border-zinc-700 text-white focus:bg-zinc-900' : 'bg-gray-50/50 border-gray-200 focus:bg-white'}`}
                                 value={formData.property_id}
                                 onChange={(e) => {
-                                    console.log('Property changed:', e.target.value);
                                     setFormData({ ...formData, property_id: e.target.value });
                                 }}
                                 required
