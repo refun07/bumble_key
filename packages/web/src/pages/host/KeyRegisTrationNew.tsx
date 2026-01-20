@@ -1,14 +1,22 @@
 import { useEffect, useState, useRef, Fragment } from 'react';
-import { useTheme } from '../../store/theme';
 import { useNavigate, useParams, Link } from 'react-router-dom';
-import { Combobox, Dialog, Transition } from '@headlessui/react';
+import { Dialog, Transition } from '@headlessui/react';
+import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import L from 'leaflet';
+import type { LatLngTuple } from 'leaflet';
+import { MagnifyingGlassIcon, MapPinIcon, XMarkIcon, PlusIcon, ChevronLeftIcon } from '@heroicons/react/24/outline';
+import { useTheme } from '../../store/theme';
 import api from '../../services/api';
 import { useToast } from '../../store/toast';
 import Button from '../../components/common/Button';
 import Input from '../../components/common/Input';
-import { XMarkIcon, PlusIcon, ChevronLeftIcon } from '@heroicons/react/24/outline';
-import HiveMapPicker from '../../components/maps/HiveMapPicker';
 
+delete (L.Icon.Default.prototype as any)._getIconUrl;
+L.Icon.Default.mergeOptions({
+    iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+    iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+    shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+});
 
 interface Property {
     id: number;
@@ -41,7 +49,59 @@ interface KeyData {
 
 const APP_URL = import.meta.env.VITE_APP_URL;
 
-const KeyRegistration = () => {
+const RecenterOnSelect = ({ hive }: { hive?: Hive | null }) => {
+    const map = useMap();
+
+    useEffect(() => {
+        if (hive) {
+            map.setView([hive.latitude, hive.longitude], 16, {
+                animate: true,
+            });
+        }
+    }, [hive, map]);
+
+    return null;
+};
+
+const HivePopupContent = ({
+    hive,
+    onUse,
+}: {
+    hive: Hive;
+    onUse: () => void;
+}) => {
+    const map = useMap();
+
+    return (
+        <div className="w-[220px]">
+            <div className="h-24 w-full overflow-hidden rounded-lg mb-3">
+                <img
+                    src={
+                        hive.photos?.[0]
+                            ? `${APP_URL}/storage/${hive.photos[0]}`
+                            : "/bumblehive_preview.png"
+                    }
+                    alt={hive.name}
+                    className="h-full w-full object-cover"
+                />
+            </div>
+            <div className="text-sm font-bold">{hive.name}</div>
+            <div className="text-xs text-gray-500 mt-1">{hive.address}</div>
+            <button
+                type="button"
+                className="mt-3 w-full rounded-lg bg-bumble-yellow px-3 py-2 text-xs font-bold text-bumble-black"
+                onClick={() => {
+                    onUse();
+                    map.closePopup();
+                }}
+            >
+                Use this BumbleKey Nest
+            </button>
+        </div>
+    );
+};
+
+const KeyRegisTrationNew = () => {
     const { isDarkMode } = useTheme();
     const { showToast } = useToast();
     const navigate = useNavigate();
@@ -54,11 +114,11 @@ const KeyRegistration = () => {
 
     const [properties, setProperties] = useState<Property[]>([]);
     const [hives, setHives] = useState<Hive[]>([]);
-    const [hiveQuery, setHiveQuery] = useState('');
+    const [mapQuery, setMapQuery] = useState('');
     const [selectedHive, setSelectedHive] = useState<Hive | null>(null);
     const [fileName, setFileName] = useState('');
+    const formRef = useRef<HTMLDivElement>(null);
 
-    // Property Modal State
     const [isPropertyModalOpen, setIsPropertyModalOpen] = useState(false);
     const [isAddingProperty, setIsAddingProperty] = useState(false);
     const [propertyErrors, setPropertyErrors] = useState<Record<string, string[]>>({});
@@ -112,8 +172,6 @@ const KeyRegistration = () => {
                 const fetchedProperties = propsRes.data.data || [];
                 const fetchedHives = hivesRes;
 
-                console.log(fetchedHives);
-
                 setProperties(fetchedProperties);
                 setHives(fetchedHives);
 
@@ -143,15 +201,8 @@ const KeyRegistration = () => {
                         }
                     }
                 } else {
-                    // Set initial property if available and not already set
                     if (fetchedProperties.length > 0 && !formData.property_id) {
                         setFormData(prev => ({ ...prev, property_id: fetchedProperties[0].id.toString() }));
-                    }
-
-                    // Set initial hive if available and not already set
-                    if (fetchedHives.length > 0 && !formData.hive_id) {
-                        setSelectedHive(fetchedHives[0]);
-                        setFormData(prev => ({ ...prev, hive_id: fetchedHives[0].id.toString() }));
                     }
                 }
             } catch (error) {
@@ -164,21 +215,21 @@ const KeyRegistration = () => {
         fetchData();
     }, [id]);
 
-    const handleHiveChange = (hiveId: string) => {
-        const hive = hives.find(h => h.id.toString() === hiveId);
-        if (hive) {
-            setSelectedHive(hive);
-            setFormData({ ...formData, hive_id: hiveId });
-        } else {
-            setSelectedHive(null);
-            setFormData({ ...formData, hive_id: '' });
+    const handleHiveSelect = (hive: Hive, shouldScroll = false) => {
+        setSelectedHive(hive);
+        setFormData(prev => ({
+            ...prev,
+            hive_id: hive.id.toString(),
+        }));
+        if (shouldScroll) {
+            formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
     };
 
-    const filteredHives = hiveQuery.trim().length === 0
+    const visibleHives = mapQuery.trim().length === 0
         ? hives
         : hives.filter((hive) => {
-            const query = hiveQuery.toLowerCase();
+            const query = mapQuery.toLowerCase();
             return hive.name.toLowerCase().includes(query)
                 || hive.address.toLowerCase().includes(query);
         });
@@ -195,7 +246,6 @@ const KeyRegistration = () => {
             setIsPropertyModalOpen(false);
             setNewProperty({ title: '', address: '', city: '', country: 'UK' });
 
-            // Refresh properties and select the new one
             const propsRes = await api.get('/hosts/properties');
             const fetchedProperties = propsRes.data.data || [];
             setProperties(fetchedProperties);
@@ -227,7 +277,7 @@ const KeyRegistration = () => {
         e.preventDefault();
         setIsSaving(true);
         setErrors({});
-        
+
         try {
             if (isEdit) {
                 await api.put(`/hosts/keys/${id}`, formData);
@@ -257,174 +307,200 @@ const KeyRegistration = () => {
         );
     }
 
+    const mapCenter: LatLngTuple = selectedHive
+        ? [selectedHive.latitude, selectedHive.longitude]
+        : [51.5074, -0.1278];
+
     return (
-        <div className={`min-h-screen px-4 py-8 sm:px-6 lg:px-10 ${isDarkMode ? 'bg-zinc-950' : 'bg-[#F8F9FB]'}`}>
-            <div className={`w-full rounded-[40px] shadow-sm border p-8 sm:p-10 lg:p-12 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-gray-100'}`}>
-                <div className="text-left mb-10">
-                    <Link to="/host/keys" className="inline-flex items-center gap-2 text-sm font-bold text-secondary hover:text-primary mb-4">
-                        <ChevronLeftIcon className="h-4 w-4" />
-                        Back to list
-                    </Link>
-                    <h2 className="text-3xl font-bold text-primary">
-                        {isEdit ? 'Edit Key' : 'Register Your Key'}
-                    </h2>
-                </div>
+        <div className={`min-h-screen px-4 py-6 sm:px-6 lg:px-10 ${isDarkMode ? 'bg-zinc-950' : 'bg-[#F8F9FB]'}`}>
+            <div className="text-left mb-6">
+                <Link to="/host/keys" className="inline-flex items-center gap-2 text-sm font-bold text-secondary hover:text-primary mb-4">
+                    <ChevronLeftIcon className="h-4 w-4" />
+                    Back to list
+                </Link>
+                <h2 className="text-3xl font-bold text-primary">
+                    {isEdit ? 'Edit Key' : 'Register Your Key'}
+                </h2>
+            </div>
 
-                <form onSubmit={handleSubmit} className="space-y-6">
-                    <div className="space-y-5">
-                        <div>
-                            <label className="block text-sm font-bold text-primary mb-2">BumbleHive</label>
-                            <Combobox
-                                value={selectedHive}
-                                onChange={(hive: Hive | null) => handleHiveChange(hive?.id?.toString() || '')}
+            <div className={`relative h-[50vh] w-full rounded-3xl border overflow-hidden shadow-2xl ${isDarkMode ? 'border-zinc-800 bg-zinc-900' : 'border-gray-100 bg-white'}`}>
+                <MapContainer center={mapCenter} zoom={13} className="h-[50vh] w-full">
+                    <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+                    <RecenterOnSelect hive={selectedHive} />
+
+                    {visibleHives.map((hive) => (
+                        <Marker
+                            key={hive.id}
+                            position={[hive.latitude, hive.longitude]}
+                            eventHandlers={{
+                                click: () => handleHiveSelect(hive),
+                            }}
+                        >
+                            <Popup>
+                                <HivePopupContent
+                                    hive={hive}
+                                    onUse={() => handleHiveSelect(hive, true)}
+                                />
+                            </Popup>
+                        </Marker>
+                    ))}
+                </MapContainer>
+
+                <div className="absolute top-6 left-1/2 z-[400] w-full max-w-2xl -translate-x-1/2 px-4">
+                    <div className="relative group">
+                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                            <MagnifyingGlassIcon className={`h-5 w-5 group-focus-within:text-bumble-yellow transition-colors ${isDarkMode ? 'text-zinc-500' : 'text-gray-400'}`} />
+                        </div>
+                        <input
+                            type="text"
+                            className={`block w-full pl-12 pr-12 py-4 border-none rounded-xl shadow-2xl focus:ring-2 focus:ring-bumble-yellow text-sm font-medium transition-all ${isDarkMode ? 'bg-zinc-800 text-white placeholder-zinc-500' : 'bg-white text-gray-900 placeholder-gray-400'}`}
+                            placeholder="Search a BumbleHive by name or address"
+                            value={mapQuery}
+                            onChange={(e) => setMapQuery(e.target.value)}
+                        />
+                        <div className="absolute inset-y-0 right-0 pr-4 flex items-center">
+                            <button
+                                type="button"
+                                className={`p-2 rounded-xl transition-colors ${isDarkMode ? 'hover:bg-zinc-700' : 'hover:bg-gray-50'}`}
                             >
-                                <div className="relative mb-4">
-                                    <Combobox.Input
-                                        className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-bumble-yellow transition-all text-sm ${isDarkMode ? 'bg-zinc-800 border-zinc-700 text-white placeholder-zinc-500' : 'bg-gray-50/50 border-gray-200 placeholder-gray-400'}`}
-                                        displayValue={(hive: Hive | null) => hive?.name || ''}
-                                        onChange={(event) => setHiveQuery(event.target.value)}
-                                        placeholder="Select a BumbleHive (Optional)"
-                                    />
-                                    {filteredHives.length > 0 && (
-                                        <Combobox.Options className={`absolute z-[1000] mt-2 max-h-60 w-full overflow-auto rounded-xl border shadow-lg ${isDarkMode ? 'bg-zinc-900 border-zinc-700 text-white' : 'bg-white border-gray-200 text-gray-900'}`}>
-                                            {filteredHives.map((hive) => (
-                                                <Combobox.Option
-                                                    key={hive.id}
-                                                    value={hive}
-                                                    className={({ active }) =>
-                                                        `cursor-pointer px-4 py-2 text-sm ${active ? 'bg-bumble-yellow text-bumble-black' : ''}`
-                                                    }
-                                                >
-                                                    <div className="font-medium">{hive.name}</div>
-                                                    <div className={`text-xs ${isDarkMode ? 'text-zinc-400' : 'text-gray-500'}`}>
-                                                        {hive.address}
-                                                    </div>
-                                                </Combobox.Option>
-                                            ))}
-                                        </Combobox.Options>
-                                    )}
-                                </div>
-                            </Combobox>
-
-                            {selectedHive && (
-                                <div className={`border  relative  rounded-2xl z-999999 p-4 flex items-center gap-4 shadow-sm ${isDarkMode ? 'bg-zinc-800/50 border-zinc-700' : 'bg-white border-gray-100'}`}>
-                                    <div className="w-20 h-20 rounded-xl overflow-hidden flex-shrink-0">
-                                        <img
-                                            src={
-                                                selectedHive.photos?.[0]
-                                                    ? `${APP_URL}/storage/${selectedHive.photos[0]}`
-                                                    : "/bumblehive_preview.png"
-                                            }
-                                            alt={selectedHive.name}
-                                            className="w-full h-full object-cover"
-                                        />
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                        <h4 className="text-sm font-bold text-primary truncate">{selectedHive.name}</h4>
-                                        <p className="text-[10px] text-secondary mt-1 leading-relaxed">{selectedHive.address}</p>
-                                    </div>
-                                </div>
-                            )}
+                                <svg className={`h-5 w-5 ${isDarkMode ? 'text-zinc-500' : 'text-gray-400'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                </svg>
+                            </button>
                         </div>
 
-                        {hives.length > 0 && (
-                            <div className="mt-10 relative z-0">
-                                <HiveMapPicker
-                                    hives={hives}
-                                    selectedHiveId={selectedHive?.id}
-                                    onSelect={(hive) => {
-                                        setSelectedHive(hive);
-                                        setFormData(prev => ({
-                                            ...prev,
-                                            hive_id: hive.id.toString(),
-                                        }));
+                        {mapQuery && visibleHives.length > 0 && (
+                            <div className={`absolute top-full mt-2 w-full rounded-xl shadow-2xl border overflow-hidden py-2 ${isDarkMode ? 'bg-zinc-800 border-zinc-700' : 'bg-white border-gray-100'}`}>
+                                {visibleHives.map(hive => (
+                                    <button
+                                        key={hive.id}
+                                        type="button"
+                                    className={`w-full px-6 py-3 flex items-center gap-4 transition-colors text-left ${isDarkMode ? 'hover:bg-zinc-700' : 'hover:bg-gray-50'}`}
+                                    onClick={() => {
+                                        handleHiveSelect(hive);
+                                        setMapQuery('');
                                     }}
-                                />
+                                >
+                                        <MapPinIcon className={`h-5 w-5 ${isDarkMode ? 'text-zinc-500' : 'text-gray-400'}`} />
+                                        <div>
+                                            <p className="text-sm font-bold text-primary">{hive.name}</p>
+                                            <p className="text-xs text-secondary truncate">{hive.address}</p>
+                                        </div>
+                                    </button>
+                                ))}
                             </div>
                         )}
+                    </div>
+                </div>
+            </div>
 
-                        <Input
-                            label="Key Name"
-                            placeholder="Write the name"
-                            className="rounded-xl border-gray-200"
-                            value={formData.label}
-                            onChange={(e) => setFormData({ ...formData, label: e.target.value })}
-                            error={errors.label?.[0]}
-                            required
-                        />
-
-                        <Input
-                            label="Address"
-                            placeholder="Write the address"
-                            className="rounded-xl border-gray-200"
-                            value={formData.description}
-                            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                            error={errors.description?.[0]}
-                        />
-
-                        <div>
-                            <div className="flex justify-between items-center mb-2">
-                                <label className="block text-sm font-bold text-primary">Property</label>
-                                <button
-                                    type="button"
-                                    onClick={() => setIsPropertyModalOpen(true)}
-                                    className="text-xs font-bold text-bumble-yellow hover:text-yellow-600 flex items-center gap-1"
-                                >
-                                    <PlusIcon className="h-3 w-3 stroke-[3]" />
-                                    Add New
-                                </button>
+            <div
+                ref={formRef}
+                className={`mt-8 w-full rounded-[32px] shadow-sm border p-6 sm:p-8 lg:p-10 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-gray-100'}`}
+            >
+                <form onSubmit={handleSubmit} className="space-y-6">
+                    {selectedHive && (
+                        <div className={`border rounded-2xl p-4 flex items-center gap-4 shadow-sm ${isDarkMode ? 'bg-zinc-800/50 border-zinc-700' : 'bg-white border-gray-100'}`}>
+                            <div className="w-20 h-20 rounded-xl overflow-hidden flex-shrink-0">
+                                <img
+                                    src={
+                                        selectedHive.photos?.[0]
+                                            ? `${APP_URL}/storage/${selectedHive.photos[0]}`
+                                            : "/bumblehive_preview.png"
+                                    }
+                                    alt={selectedHive.name}
+                                    className="w-full h-full object-cover"
+                                />
                             </div>
-                            <select
-                                className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-bumble-yellow transition-all text-sm ${isDarkMode ? 'bg-zinc-800 border-zinc-700 text-white focus:bg-zinc-900' : 'bg-gray-50/50 border-gray-200 focus:bg-white'}`}
-                                value={formData.property_id}
-                                onChange={(e) => {
-                                    setFormData({ ...formData, property_id: e.target.value });
-                                }}
-                                required
-                            >
-                                <option value="">Select a property</option>
-                                {properties.map(prop => (
-                                    <option key={prop.id} value={prop.id}>{prop.title}</option>
-                                ))}
-                            </select>
-                            {errors.property_id && <p className="mt-1 text-xs text-red-500">{errors.property_id[0]}</p>}
+                            <div className="flex-1 min-w-0">
+                                <h4 className="text-sm font-bold text-primary truncate">{selectedHive.name}</h4>
+                                <p className="text-[10px] text-secondary mt-1 leading-relaxed">{selectedHive.address}</p>
+                            </div>
                         </div>
+                    )}
 
-                        <Input
-                            label="Notes"
-                            placeholder="Write the notes"
-                            className="rounded-xl border-gray-200"
-                            value={formData.notes}
-                            onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                            error={errors.notes?.[0]}
-                        />
+                    <Input
+                        label="Key Name"
+                        placeholder="Write the name"
+                        className="rounded-xl border-gray-200"
+                        value={formData.label}
+                        onChange={(e) => setFormData({ ...formData, label: e.target.value })}
+                        error={errors.label?.[0]}
+                        required
+                    />
 
-                        <div>
-                            <label className="block text-sm font-bold text-primary mb-2">Key Image</label>
-                            <div className="flex gap-2">
-                                <input
-                                    type="text"
-                                    placeholder="No image uploaded"
-                                    className={`flex-1 px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-bumble-yellow transition-all text-sm ${isDarkMode ? 'bg-zinc-800 border-zinc-700 text-white placeholder-zinc-500' : 'bg-gray-50/50 border-gray-200 placeholder-gray-400'}`}
-                                    value={fileName}
-                                    readOnly
-                                />
-                                <input
-                                    type="file"
-                                    ref={fileInputRef}
-                                    onChange={handleFileChange}
-                                    className="hidden"
-                                    accept="image/*"
-                                />
-                                <Button
-                                    type="button"
-                                    variant="bumble"
-                                    className="px-6 py-3"
-                                    onClick={() => fileInputRef.current?.click()}
-                                >
-                                    Upload
-                                </Button>
-                            </div>
+                    <Input
+                        label="Address"
+                        placeholder="Write the address"
+                        className="rounded-xl border-gray-200"
+                        value={formData.description}
+                        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                        error={errors.description?.[0]}
+                    />
+
+                    <div>
+                        <div className="flex justify-between items-center mb-2">
+                            <label className="block text-sm font-bold text-primary">Property</label>
+                            <button
+                                type="button"
+                                onClick={() => setIsPropertyModalOpen(true)}
+                                className="text-xs font-bold text-bumble-yellow hover:text-yellow-600 flex items-center gap-1"
+                            >
+                                <PlusIcon className="h-3 w-3 stroke-[3]" />
+                                Add New
+                            </button>
+                        </div>
+                        <select
+                            className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-bumble-yellow transition-all text-sm ${isDarkMode ? 'bg-zinc-800 border-zinc-700 text-white focus:bg-zinc-900' : 'bg-gray-50/50 border-gray-200 focus:bg-white'}`}
+                            value={formData.property_id}
+                            onChange={(e) => {
+                                setFormData({ ...formData, property_id: e.target.value });
+                            }}
+                            required
+                        >
+                            <option value="">Select a property</option>
+                            {properties.map(prop => (
+                                <option key={prop.id} value={prop.id}>{prop.title}</option>
+                            ))}
+                        </select>
+                        {errors.property_id && <p className="mt-1 text-xs text-red-500">{errors.property_id[0]}</p>}
+                    </div>
+
+                    <Input
+                        label="Notes"
+                        placeholder="Write the notes"
+                        className="rounded-xl border-gray-200"
+                        value={formData.notes}
+                        onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                        error={errors.notes?.[0]}
+                    />
+
+                    <div>
+                        <label className="block text-sm font-bold text-primary mb-2">Key Image</label>
+                        <div className="flex gap-2">
+                            <input
+                                type="text"
+                                placeholder="No image uploaded"
+                                className={`flex-1 px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-bumble-yellow transition-all text-sm ${isDarkMode ? 'bg-zinc-800 border-zinc-700 text-white placeholder-zinc-500' : 'bg-gray-50/50 border-gray-200 placeholder-gray-400'}`}
+                                value={fileName}
+                                readOnly
+                            />
+                            <input
+                                type="file"
+                                ref={fileInputRef}
+                                onChange={handleFileChange}
+                                className="hidden"
+                                accept="image/*"
+                            />
+                            <Button
+                                type="button"
+                                variant="bumble"
+                                className="px-6 py-3"
+                                onClick={() => fileInputRef.current?.click()}
+                            >
+                                Upload
+                            </Button>
                         </div>
                     </div>
 
@@ -441,7 +517,6 @@ const KeyRegistration = () => {
                 </form>
             </div>
 
-            {/* Add Property Modal */}
             <Transition.Root show={isPropertyModalOpen} as={Fragment}>
                 <Dialog as="div" className="relative z-50" onClose={setIsPropertyModalOpen}>
                     <Transition.Child
@@ -520,7 +595,6 @@ const KeyRegistration = () => {
                                                 <div className="pt-6 flex gap-4">
                                                     <Button
                                                         type="button"
-                                                       
                                                         className="flex-1 py-3 rounded-xl font-bold"
                                                         onClick={() => setIsPropertyModalOpen(false)}
                                                     >
@@ -548,4 +622,4 @@ const KeyRegistration = () => {
     );
 };
 
-export default KeyRegistration;
+export default KeyRegisTrationNew;

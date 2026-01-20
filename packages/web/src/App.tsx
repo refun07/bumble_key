@@ -23,6 +23,7 @@ const Accounts = React.lazy(() => import('./pages/admin/Accounts'));
 const Reports = React.lazy(() => import('./pages/admin/Reports'));
 import HostKeyList from './pages/host/HostKeyList';
 import KeyRegistration from './pages/host/KeyRegistration';
+import KeyRegisTrationNew from './pages/host/KeyRegisTrationNew';
 import HostKeyDetailsHost from './pages/host/HostKeyDetails';
 import CollectionCodeView from './pages/host/CollectionCodeView';
 import GuestPickupView from './pages/guest/GuestPickupView';
@@ -148,8 +149,8 @@ function App() {
         >
           <Route path="dashboard" element={<React.Suspense fallback={<AppLoader/>}><HostDashboard /></React.Suspense>} />
           <Route path="keys" element={<HostKeyList />} />
-          <Route path="keys/new" element={<KeyRegistration />} />
-          <Route path="keys/:id/edit" element={<KeyRegistration />} />
+          <Route path="keys/new" element={<KeyRegisTrationNew />} />
+          <Route path="keys/:id/edit" element={<KeyRegisTrationNew />} />
           <Route path="keys/:id" element={<HostKeyDetailsHost />} />
           <Route path="keys/:id/collection" element={<CollectionCodeView />} />
           <Route path="keys/:id/codes" element={<ViewCodes />} />

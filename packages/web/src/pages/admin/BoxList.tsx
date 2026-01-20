@@ -47,6 +47,7 @@ interface Hive {
 
 
 const APP_URL = import.meta.env.VITE_APP_URL ;
+const DEFAULT_COUNTRY = import.meta.env.DEFAULT_COUNTRY || 'Australia';
 const BoxList = () => {
     const { showToast } = useToast();
     const { isDarkMode } = useTheme();
@@ -92,9 +93,9 @@ const BoxList = () => {
         location_name: '',
         address: '',
         city: '',
-        country: 'Bangladesh',
-        latitude: 23.7804927,   // default Dhaka
-        longitude: 90.3582974,
+        country: DEFAULT_COUNTRY,
+        latitude: -37.8136,
+        longitude: 144.9631,
         total_cells: 10,
         partner_id: '',
         image: null
@@ -270,9 +271,9 @@ const hasCoords = (hive: Hive): boolean =>
                 location_name: '',
                 address: '',
                 city: '',
-                country: 'Bangladesh',
-                latitude: 23.7804927,
-                longitude: 90.3582974,
+                country: DEFAULT_COUNTRY,
+                latitude: -37.8136,
+                longitude: 144.9631,
                 total_cells: 10,
                 partner_id: '',
                 image: null
