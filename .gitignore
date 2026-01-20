@@ -48,3 +48,6 @@ coverage/
 *.pem
 *.p12
 *.mobileprovision
+# Web env files
+packages/web/.env.development
+packages/web/.env.production
