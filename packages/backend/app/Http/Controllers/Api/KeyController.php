@@ -8,6 +8,8 @@ use App\Models\Hive;
 use Illuminate\Http\Request;
 use App\Services\AuditLogger;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Storage;
+
 
 class KeyController extends Controller
 {
@@ -42,7 +44,7 @@ class KeyController extends Controller
             });
         }
 
-        $pageLength=10;
+        $pageLength = 10;
 
         $perPage = (int) $request->get('per_page', $pageLength);
         $perPage = $perPage > 0 ? $perPage : $pageLength;
@@ -64,11 +66,39 @@ class KeyController extends Controller
             'hive_id' => 'nullable|exists:hives,id', // Optional initial drop-off
         ]);
 
-        if($validated['package_type'] === 'pay_as_you_go'){
+        if ($validated['package_type'] === 'pay_as_you_go') {
             $validated['package_type'] = 'pay_per_use';
         }
         // Verify property belongs to user
         $property = $request->user()->properties()->findOrFail($validated['property_id']);
+
+
+        /** -------------------------
+         *  HANDLE BASE64 IMAGE
+         *  -------------------------
+         */
+        $photoPath = null;
+
+        if (!empty($validated['photo']) && Str::startsWith($validated['photo'], 'data:image')) {
+
+            // Extract mime + data
+            preg_match('/data:image\/(\w+);base64,/', $validated['photo'], $matches);
+            $extension = $matches[1] ?? 'jpg';
+
+            $imageData = substr($validated['photo'], strpos($validated['photo'], ',') + 1);
+            $imageData = base64_decode($imageData);
+
+            // Ensure directory exists
+            Storage::disk('public')->makeDirectory('keys');
+
+            // Generate filename
+            $filename = 'keys/key_' . Str::uuid() . '.' . $extension;
+
+            // Store file
+            Storage::disk('public')->put($filename, $imageData);
+
+            $photoPath = $filename;
+        }
 
         $key = $request->user()->keys()->create([
             'property_id' => $property->id,
@@ -77,7 +107,7 @@ class KeyController extends Controller
             'package_type' => $validated['package_type'],
             'description' => $validated['description'] ?? null,
             'notes' => $validated['notes'] ?? null,
-            'photo' => $validated['photo'] ?? null,
+            'photo' =>  $photoPath  ?? null,
             'status' => 'created',
         ]);
 
@@ -131,16 +161,54 @@ class KeyController extends Controller
             'property_id' => 'sometimes|required|exists:properties,id',
             'label' => 'sometimes|required|string|max:255',
             'key_type' => 'sometimes|required|in:master,duplicate,spare',
-            'package_type' => 'sometimes|required|in:weekly,monthly,yearly,pay_per_use',
+            'package_type' => 'sometimes|required|in:weekly,monthly,yearly,pay_as_you_go',
             'description' => 'nullable|string',
             'notes' => 'nullable|string',
             'photo' => 'nullable|string',
             'hive_id' => 'nullable|exists:hives,id',
         ]);
+        if ($validated['package_type'] === 'pay_as_you_go') {
+            $validated['package_type'] = 'pay_per_use';
+        }
 
         if (isset($validated['property_id'])) {
             $request->user()->properties()->findOrFail($validated['property_id']);
         }
+
+        /** -------------------------
+         *  HANDLE BASE64 IMAGE UPDATE
+         *  -------------------------
+         */
+        if (
+            array_key_exists('photo', $validated) &&
+            !empty($validated['photo']) &&
+            Str::startsWith($validated['photo'], 'data:image')
+        ) {
+            // Extract extension
+            preg_match('/data:image\/(\w+);base64,/', $validated['photo'], $matches);
+            $extension = $matches[1] ?? 'jpg';
+
+            $imageData = substr($validated['photo'], strpos($validated['photo'], ',') + 1);
+            $imageData = base64_decode($imageData);
+
+            // Ensure directory exists
+            Storage::disk('public')->makeDirectory('keys');
+
+            // Delete old photo if exists
+            if ($key->photo && Storage::disk('public')->exists($key->photo)) {
+                Storage::disk('public')->delete($key->photo);
+            }
+
+            // Store new photo
+            $filename = 'keys/key_' . Str::uuid() . '.' . $extension;
+            Storage::disk('public')->put($filename, $imageData);
+
+            $validated['photo'] = $filename;
+        } else {
+            // Prevent overwriting existing photo with base64 or empty string
+            unset($validated['photo']);
+        }
+
 
         $hiveId = $validated['hive_id'] ?? null;
         if (array_key_exists('hive_id', $validated)) {
@@ -184,6 +252,10 @@ class KeyController extends Controller
             return response()->json([
                 'message' => 'Key is currently in use and cannot be deleted.',
             ], 422);
+        }
+
+        if ($key->photo && Storage::disk('public')->exists($key->photo)) {
+            Storage::disk('public')->delete($key->photo);
         }
 
         $key->delete();

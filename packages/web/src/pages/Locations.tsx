@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { GoogleMap, useJsApiLoader, Marker, OverlayView } from '@react-google-maps/api';
 import { MagnifyingGlassIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import api from '../services/api';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 interface Hive {
     id: number;
@@ -19,6 +19,18 @@ interface Hive {
     available_cells: number;
     operating_hours: { open: string; close: string } | null;
     photos: string[] | null;
+}
+
+interface PricingData {
+    pay_as_you_go_price: number;
+    monthly_price: number;
+    yearly_price: number;
+    monthly_discount: number;
+    yearly_discount: number;
+    monthly_discounted_price: number;
+    yearly_discounted_price: number;
+    trial_days: number;
+    currency: string;
 }
 
 const containerStyle = {
@@ -96,6 +108,20 @@ const Locations = () => {
     const [showDropdown, setShowDropdown] = useState(false);
     const [loading, setLoading] = useState(true);
     const [map, setMap] = useState<google.maps.Map | null>(null);
+    const [showPlanSelect, setShowPlanSelect] = useState(false);
+    const [activePlan, setActivePlan] = useState<'pay_as_you_go' | 'monthly' | 'yearly'>('monthly');
+    const [pricing, setPricing] = useState<PricingData>({
+        pay_as_you_go_price: 5,
+        monthly_price: 29,
+        yearly_price: 290,
+        monthly_discount: 0,
+        yearly_discount: 0,
+        monthly_discounted_price: 29,
+        yearly_discounted_price: 290,
+        trial_days: 14,
+        currency: 'AUD'
+    });
+    const navigate = useNavigate();
 
     const { isLoaded } = useJsApiLoader({
         id: 'google-map-script',
@@ -112,6 +138,18 @@ const Locations = () => {
 
     useEffect(() => {
         fetchHives();
+    }, []);
+
+    useEffect(() => {
+        const fetchPricing = async () => {
+            try {
+                const response = await api.get('/pricing');
+                setPricing(response.data);
+            } catch (error) {
+                console.error('Failed to fetch pricing:', error);
+            }
+        };
+        fetchPricing();
     }, []);
 
     useEffect(() => {
@@ -169,6 +207,40 @@ const Locations = () => {
             map.panTo({ lat: Number(hive.latitude), lng: Number(hive.longitude) });
             map.setZoom(15);
         }
+    };
+
+    const handleUseHive = () => {
+        if (!selectedHive) return;
+        localStorage.setItem('public_bumblekey_selection', JSON.stringify(selectedHive));
+        setShowPlanSelect(true);
+    };
+
+    const getPlanPrice = (plan: 'pay_as_you_go' | 'monthly' | 'yearly') => {
+        if (plan === 'pay_as_you_go') {
+            return pricing.pay_as_you_go_price;
+        }
+        if (plan === 'monthly') {
+            return pricing.monthly_discount > 0 ? Number(pricing.monthly_discounted_price.toFixed(0)) : pricing.monthly_price;
+        }
+        return pricing.yearly_discount > 0 ? Number(pricing.yearly_discounted_price.toFixed(0)) : pricing.yearly_price;
+    };
+
+    const getPlanLabel = (plan: 'pay_as_you_go' | 'monthly' | 'yearly') => {
+        if (plan === 'pay_as_you_go') {
+            return 'Pay as you go';
+        }
+        return plan === 'monthly' ? 'Monthly' : 'Yearly';
+    };
+
+    const handlePlanContinue = () => {
+        const selectedPlan = {
+            id: activePlan,
+            label: getPlanLabel(activePlan),
+            price: getPlanPrice(activePlan),
+            currency: pricing.currency,
+        };
+        localStorage.setItem('public_bumblekey_plan', JSON.stringify(selectedPlan));
+        navigate('/host/signup');
     };
 
     return (
@@ -272,11 +344,12 @@ const Locations = () => {
                                         </div>
                                     )}
 
-                                    <Link to="/host/signup">
-                                        <button className="w-full bg-gray-900 text-white py-2.5 px-4 rounded-md font-medium text-sm hover:bg-gray-800 transition-colors">
-                                            Use This BumbleHive
-                                        </button>
-                                    </Link>
+                                    <button
+                                        onClick={handleUseHive}
+                                        className="w-full bg-gray-900 text-white py-2.5 px-4 rounded-md font-medium text-sm hover:bg-gray-800 transition-colors"
+                                    >
+                                        Use This BumbleHive
+                                    </button>
                                 </div>
                             </div>
                         </OverlayView>
@@ -349,6 +422,69 @@ const Locations = () => {
                     </p>
                 </div>
             </div>
+
+            {showPlanSelect && (
+                <div className="fixed inset-0 z-20 flex items-center justify-center bg-black/50 px-4">
+                    <div className="w-full max-w-xl rounded-2xl bg-white p-6 shadow-2xl">
+                        <div className="flex items-center justify-between mb-6">
+                            <h2 className="text-xl font-bold text-gray-900">Subscribe to a Plan</h2>
+                            <button
+                                onClick={() => setShowPlanSelect(false)}
+                                className="rounded-full p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100"
+                            >
+                                <XMarkIcon className="w-5 h-5" />
+                            </button>
+                        </div>
+
+                        <div className="space-y-4">
+                            {(['pay_as_you_go', 'monthly', 'yearly'] as const).map((plan) => {
+                                const isActive = activePlan === plan;
+                                const showDiscount = (plan === 'monthly' && pricing.monthly_discount > 0)
+                                    || (plan === 'yearly' && pricing.yearly_discount > 0);
+                                return (
+                                    <button
+                                        key={plan}
+                                        onClick={() => setActivePlan(plan)}
+                                        className={`w-full rounded-xl border px-5 py-4 text-left transition-colors ${isActive ? 'border-gray-900 bg-gray-50' : 'border-gray-200 bg-white hover:border-gray-300'
+                                            }`}
+                                    >
+                                        <div className="flex items-center justify-between">
+                                            <div>
+                                                <div className="text-sm font-semibold text-gray-900">{getPlanLabel(plan)}</div>
+                                                <div className="text-xs text-gray-500">
+                                                    {plan === 'pay_as_you_go' ? 'Per Key Exchange' : plan === 'monthly' ? 'Per Month' : 'Per Year'}
+                                                </div>
+                                            </div>
+                                            <div className="text-right">
+                                                <div className="text-lg font-bold text-gray-900">
+                                                    ${getPlanPrice(plan)}
+                                                </div>
+                                                {showDiscount && (
+                                                    <div className="text-xs text-green-600 font-semibold">
+                                                        {plan === 'monthly' ? pricing.monthly_discount : pricing.yearly_discount}% OFF
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                        {showDiscount && (
+                                            <div className="mt-1 text-xs text-gray-400 line-through">
+                                                Was ${plan === 'monthly' ? pricing.monthly_price : pricing.yearly_price}
+                                            </div>
+                                        )}
+                                    </button>
+                                );
+                            })}
+                        </div>
+
+                        <button
+                            onClick={handlePlanContinue}
+                            className="mt-6 w-full rounded-xl bg-gray-900 py-3 text-sm font-semibold text-white hover:bg-gray-800 transition-colors"
+                        >
+                            Next
+                        </button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

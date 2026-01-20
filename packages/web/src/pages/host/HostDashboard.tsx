@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import api from '../../services/api';
 import Button from '../../components/common/Button';
 import {
@@ -18,6 +18,7 @@ interface Stats {
 }
 
 const HostDashboard = () => {
+    const navigate = useNavigate();
     const [stats, setStats] = useState<Stats>({
         total_keys: 0,
         active_assignments: 0,
@@ -26,6 +27,15 @@ const HostDashboard = () => {
     });
     const [recentActivity, setRecentActivity] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        const storedHive = localStorage.getItem('public_bumblekey_selection');
+        const storedPlan = localStorage.getItem('public_bumblekey_plan');
+
+        if (storedHive || storedPlan) {
+            navigate('/host/keys/new', { replace: true });
+        }
+    }, [navigate]);
 
     useEffect(() => {
         const fetchDashboardData = async () => {

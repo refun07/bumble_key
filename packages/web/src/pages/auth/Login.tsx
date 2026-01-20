@@ -112,7 +112,7 @@ const Login = () => {
                         </div>
 
                         <Link to="/host/signup" className="block">
-                            <Button variant="outline" className="w-full py-3">
+                            <Button  className="w-full py-3">
                                 Sign up as a Host
                             </Button>
                         </Link>

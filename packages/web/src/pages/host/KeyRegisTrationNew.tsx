@@ -47,7 +47,28 @@ interface KeyData {
     };
 }
 
+interface PricingData {
+    pay_as_you_go_price: number;
+    monthly_price: number;
+    yearly_price: number;
+    monthly_discount: number;
+    yearly_discount: number;
+    monthly_discounted_price: number;
+    yearly_discounted_price: number;
+    trial_days: number;
+    currency: string;
+}
+
 const APP_URL = import.meta.env.VITE_APP_URL;
+const DEFAULT_COUNTRY = import.meta.env.DEFAULT_COUNTRY || 'Australia';
+
+const getKeyPhotoSrc = (photo?: string | null) => {
+    if (!photo) return '';
+    if (photo.startsWith('data:') || photo.startsWith('http')) {
+        return photo;
+    }
+    return `${APP_URL}/storage/${photo}`;
+};
 
 const RecenterOnSelect = ({ hive }: { hive?: Hive | null }) => {
     const map = useMap();
@@ -118,6 +139,18 @@ const KeyRegisTrationNew = () => {
     const [selectedHive, setSelectedHive] = useState<Hive | null>(null);
     const [fileName, setFileName] = useState('');
     const formRef = useRef<HTMLDivElement>(null);
+    const [pricing, setPricing] = useState<PricingData>({
+        pay_as_you_go_price: 5,
+        monthly_price: 29,
+        yearly_price: 290,
+        monthly_discount: 0,
+        yearly_discount: 0,
+        monthly_discounted_price: 29,
+        yearly_discounted_price: 290,
+        trial_days: 14,
+        currency: 'AUD',
+    });
+    const [preselectedHiveId, setPreselectedHiveId] = useState<number | null>(null);
 
     const [isPropertyModalOpen, setIsPropertyModalOpen] = useState(false);
     const [isAddingProperty, setIsAddingProperty] = useState(false);
@@ -126,7 +159,7 @@ const KeyRegisTrationNew = () => {
         title: '',
         address: '',
         city: '',
-        country: 'UK',
+        country: DEFAULT_COUNTRY,
     });
 
     const [formData, setFormData] = useState({
@@ -139,6 +172,61 @@ const KeyRegisTrationNew = () => {
         hive_id: '',
         photo: '',
     });
+    useEffect(() => {
+        if (isEdit) return;
+
+        const storedHive = localStorage.getItem('public_bumblekey_selection');
+        const storedPlan = localStorage.getItem('public_bumblekey_plan');
+
+        
+
+        if (storedHive) {
+            try {
+                const hiveData = JSON.parse(storedHive);
+                if (hiveData?.id) {
+                    setPreselectedHiveId(Number(hiveData.id));
+                }
+            } catch (error) {
+                console.warn('Failed to parse public_bumblekey_selection', error);
+            }
+        }
+
+        if (storedPlan) {
+            try {
+                const planData = JSON.parse(storedPlan);
+                const planId = planData?.id;
+                if (planId === 'pay_as_you_go' || planId === 'monthly' || planId === 'yearly') {
+                    setFormData(prev => ({
+                        ...prev,
+                        package_type: planId,
+                    }));
+             
+                }
+            } catch (error) {
+                console.warn('Failed to parse public_bumblekey_plan', error);
+            }
+        }
+
+
+        localStorage.removeItem('public_bumblekey_selection');
+        localStorage.removeItem('public_bumblekey_plan'); 
+        
+        
+    }, [isEdit]);
+
+
+    useEffect(() => {
+    if (!formData.package_type) return;
+
+    const timer = setTimeout(() => {
+        formRef.current?.scrollIntoView({
+            behavior: 'smooth',
+            block: 'end',
+        });
+    }, 500); // half second
+
+    return () => clearTimeout(timer);
+}, [formData.package_type]);
 
     useEffect(() => {
         const fetchAllHives = async () => {
@@ -163,17 +251,20 @@ const KeyRegisTrationNew = () => {
                 const propsPromise = api.get('/hosts/properties');
                 const hivesPromise = fetchAllHives();
                 const keyPromise = id ? api.get(`/hosts/keys/${id}`) : Promise.resolve(null);
+                const pricingPromise = api.get('/pricing');
 
-                const [propsRes, hivesRes, keyRes] = await Promise.all([
+                const [propsRes, hivesRes, keyRes, pricingRes] = await Promise.all([
                     propsPromise,
                     hivesPromise,
-                    keyPromise
+                    keyPromise,
+                    pricingPromise
                 ]);
                 const fetchedProperties = propsRes.data.data || [];
                 const fetchedHives = hivesRes;
 
                 setProperties(fetchedProperties);
                 setHives(fetchedHives);
+                setPricing(pricingRes.data);
 
                 if (keyRes?.data?.data) {
                     const keyData: KeyData = keyRes.data.data;
@@ -215,6 +306,21 @@ const KeyRegisTrationNew = () => {
         fetchData();
     }, [id]);
 
+    useEffect(() => {
+        if (isEdit || !preselectedHiveId || hives.length === 0) return;
+
+        if (formData.hive_id) return;
+
+        const matchedHive = hives.find((hive) => hive.id === preselectedHiveId);
+        if (matchedHive) {
+            setSelectedHive(matchedHive);
+            setFormData(prev => ({
+                ...prev,
+                hive_id: matchedHive.id.toString(),
+            }));
+        }
+    }, [hives, preselectedHiveId, isEdit, formData.hive_id]);
+
     const handleHiveSelect = (hive: Hive, shouldScroll = false) => {
         setSelectedHive(hive);
         setFormData(prev => ({
@@ -233,6 +339,23 @@ const KeyRegisTrationNew = () => {
             return hive.name.toLowerCase().includes(query)
                 || hive.address.toLowerCase().includes(query);
         });
+
+    const getPlanPrice = (plan: 'pay_as_you_go' | 'monthly' | 'yearly') => {
+        if (plan === 'pay_as_you_go') {
+            return pricing.pay_as_you_go_price;
+        }
+        if (plan === 'monthly') {
+            return pricing.monthly_discount > 0 ? Number(pricing.monthly_discounted_price.toFixed(0)) : pricing.monthly_price;
+        }
+        return pricing.yearly_discount > 0 ? Number(pricing.yearly_discounted_price.toFixed(0)) : pricing.yearly_price;
+    };
+
+    const getPlanLabel = (plan: 'pay_as_you_go' | 'monthly' | 'yearly') => {
+        if (plan === 'pay_as_you_go') {
+            return 'Pay as you go';
+        }
+        return plan === 'monthly' ? 'Monthly' : 'Yearly';
+    };
 
     const handleAddProperty = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -420,6 +543,43 @@ const KeyRegisTrationNew = () => {
                         </div>
                     )}
 
+                    <div>
+                        <label className="block text-sm font-bold text-primary mb-2">Package</label>
+                        <div className="grid gap-3 sm:grid-cols-3">
+                            {(['pay_as_you_go', 'monthly', 'yearly'] as const).map((plan) => {
+                                const isActive = formData.package_type === plan;
+                                const showDiscount = (plan === 'monthly' && pricing.monthly_discount > 0)
+                                    || (plan === 'yearly' && pricing.yearly_discount > 0);
+                                return (
+                                    <button
+                                        key={plan}
+                                        type="button"
+                                        onClick={() => setFormData(prev => ({ ...prev, package_type: plan }))}
+                                        className={`rounded-xl border px-4 py-3 text-left transition-colors ${isActive
+                                            ? 'border-gray-900 bg-gray-50'
+                                            : 'border-gray-200 bg-white hover:border-gray-300'
+                                            } ${isDarkMode ? 'bg-zinc-800 border-zinc-700 text-white hover:border-zinc-600' : ''}`}
+                                    >
+                                        <div className="text-[10px] text-secondary uppercase tracking-wide">
+                                            {plan === 'pay_as_you_go' ? 'Per Key Exchange' : plan === 'monthly' ? 'Per Month' : 'Per Year'}
+                                        </div>
+                                        <div className={`mt-1 text-sm font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                                            {getPlanLabel(plan)}
+                                        </div>
+                                        <div className={`mt-1 text-lg font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                                            ${getPlanPrice(plan)}
+                                        </div>
+                                        {showDiscount && (
+                                            <div className="text-xs text-green-600 font-semibold">
+                                                {plan === 'monthly' ? pricing.monthly_discount : pricing.yearly_discount}% OFF
+                                            </div>
+                                        )}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </div>
+
                     <Input
                         label="Key Name"
                         placeholder="Write the name"
@@ -478,6 +638,17 @@ const KeyRegisTrationNew = () => {
 
                     <div>
                         <label className="block text-sm font-bold text-primary mb-2">Key Image</label>
+                        {formData.photo && (
+                            <div className="mb-3">
+                                <div className="h-40 w-full overflow-hidden rounded-2xl border border-gray-200 bg-gray-50">
+                                    <img
+                                        src={getKeyPhotoSrc(formData.photo)}
+                                        alt="Key preview"
+                                        className="h-full w-full object-contain"
+                                    />
+                                </div>
+                            </div>
+                        )}
                         <div className="flex gap-2">
                             <input
                                 type="text"

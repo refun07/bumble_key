@@ -173,7 +173,7 @@ const HostKeyList = () => {
                     </div>
 
                     <Button
-                        variant="outline"
+                        
                         onClick={() => { setSearch(''); setStatusFilter('all'); setHiveFilter('all'); setCurrentPage(1); }}
                         className="px-6 py-3 whitespace-nowrap"
                     >
