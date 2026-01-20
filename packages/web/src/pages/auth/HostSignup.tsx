@@ -124,13 +124,13 @@ const HostSignup = () => {
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <Button type="button" variant="outline" className="py-3.5 px-4 text-[10px] uppercase tracking-wider">
+                        <Button type="button" variant="primary" className="py-3.5 px-4 text-[10px] uppercase tracking-wider">
                             Signup with Google
                         </Button>
-                        <Button type="button" variant="outline" className="py-3.5 px-4 text-[10px] uppercase tracking-wider">
+                        <Button type="button" variant="primary" className="py-3.5 px-4 text-[10px] uppercase tracking-wider">
                             Signup with AirBNB
                         </Button>
-                        <Button type="button" variant="outline" className="py-3.5 px-4 text-[10px] uppercase tracking-wider">
+                        <Button type="button" variant="primary" className="py-3.5 px-4 text-[10px] uppercase tracking-wider">
                             Signup with AppleID
                         </Button>
                     </div>
