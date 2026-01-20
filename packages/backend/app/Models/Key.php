@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -17,7 +18,7 @@ class Key extends Model
         'photo',
         'serial_number',
         'key_type', // master, duplicate, spare
-        'package_type', // weekly, monthly, pay_per_use
+        'package_type', // weekly, monthly, pay_per_use,yearly
         'package_price',
         'subscription_ends_at',
         'notes',
@@ -42,5 +43,14 @@ class Key extends Model
     public function currentAssignment()
     {
         return $this->hasOne(KeyAssignment::class)->latestOfMany();
+    }
+
+    protected function packageType(): Attribute
+    {
+        return Attribute::make(
+            get: fn ($value) => $value === 'pay_per_use'
+                ? 'pay_as_you_go'
+                : $value
+        );
     }
 }

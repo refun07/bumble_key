@@ -57,13 +57,16 @@ class KeyController extends Controller
             'property_id' => 'required|exists:properties,id',
             'label' => 'required|string|max:255',
             'key_type' => 'required|in:master,duplicate,spare',
-            'package_type' => 'required|in:weekly,monthly,yearly,pay_per_use',
+            'package_type' => 'required|in:weekly,monthly,yearly,pay_as_you_go',
             'description' => 'nullable|string',
             'notes' => 'nullable|string',
             'photo' => 'nullable|string', // Base64 or URL
             'hive_id' => 'nullable|exists:hives,id', // Optional initial drop-off
         ]);
 
+        if($validated['package_type'] === 'pay_as_you_go'){
+            $validated['package_type'] = 'pay_per_use';
+        }
         // Verify property belongs to user
         $property = $request->user()->properties()->findOrFail($validated['property_id']);
 
