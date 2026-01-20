@@ -22,7 +22,6 @@ const ActivityLog = React.lazy(() => import('./pages/admin/ActivityLog'));
 const Accounts = React.lazy(() => import('./pages/admin/Accounts'));
 const Reports = React.lazy(() => import('./pages/admin/Reports'));
 import HostKeyList from './pages/host/HostKeyList';
-import KeyRegistration from './pages/host/KeyRegistration';
 import KeyRegisTrationNew from './pages/host/KeyRegisTrationNew';
 import HostKeyDetailsHost from './pages/host/HostKeyDetails';
 import CollectionCodeView from './pages/host/CollectionCodeView';
@@ -45,6 +44,8 @@ import CookieConsent from './components/common/CookieConsent';
 import ToastContainer from './components/common/ToastContainer';
 import Locations from './pages/Locations';
 import AppLoader from './components/common/AppLoader';
+import PublicBumbleKeyFlow from './pages/public/PublicBumbleKeyFlow';
+
 
 // Smart Dashboard Redirect
 const DashboardRedirect = () => {
@@ -93,6 +94,10 @@ function App() {
         <Route path="/register" element={<React.Suspense fallback={<AppLoader/>}><Register /></React.Suspense>} />
         <Route path="/host/signup" element={<HostSignup />} />
         <Route path="/guest/pickup/:id" element={<GuestPickupView />} />
+        <Route
+          path="/public/bumblekey"
+          element={<PublicBumbleKeyFlow />}
+        />
 
         {/* Landing Pages */}
         <Route element={<LandingLayout />}>
