@@ -60,7 +60,7 @@ interface PricingData {
 }
 
 const APP_URL = import.meta.env.VITE_APP_URL;
-const DEFAULT_COUNTRY = import.meta.env.DEFAULT_COUNTRY || 'Australia';
+const DEFAULT_COUNTRY = import.meta.env.VITE_DEFAULT_COUNTRY || 'Australia';
 
 const getKeyPhotoSrc = (photo?: string | null) => {
     if (!photo) return '';

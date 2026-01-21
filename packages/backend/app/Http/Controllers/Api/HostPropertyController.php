@@ -12,7 +12,7 @@ class HostPropertyController extends Controller
 {
     public function index(Request $request)
     {
-        $properties = $request->user()->properties()
+        $properties = $request->user()->properties()->where('is_active', true)
             ->latest()
             ->get();
 
@@ -78,7 +78,7 @@ class HostPropertyController extends Controller
         /**
          * Pagination
          */
-        $perPage = $request->get('per_page', 20);
+        $perPage = $request->get('per_page', 10);
 
         return response()->json(
             $query->paginate($perPage)
