@@ -653,7 +653,7 @@ const KeyRegisTrationNew = () => {
                             <input
                                 type="text"
                                 placeholder="No image uploaded"
-                                className={`flex-1 px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-bumble-yellow transition-all text-sm ${isDarkMode ? 'bg-zinc-800 border-zinc-700 text-white placeholder-zinc-500' : 'bg-gray-50/50 border-gray-200 placeholder-gray-400'}`}
+                                className={`flex w-full overflow-hidden px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-bumble-yellow transition-all text-sm ${isDarkMode ? 'bg-zinc-800 border-zinc-700 text-white placeholder-zinc-500' : 'bg-gray-50/50 border-gray-200 placeholder-gray-400'}`}
                                 value={fileName}
                                 readOnly
                             />
