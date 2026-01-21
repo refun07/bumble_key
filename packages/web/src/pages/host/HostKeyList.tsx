@@ -116,122 +116,142 @@ const HostKeyList = () => {
         }
     };
 
-    if (isLoading) {
-        return (
-            <div className="space-y-8">
-                <div className={`h-16 rounded-xl animate-pulse ${isDarkMode ? 'bg-zinc-800' : 'bg-gray-100'}`} />
-                <TableShimmer rows={6} cols={5} />
-            </div>
-        );
-    }
-
     return (
         <div className="space-y-8">
-            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-                <div className="flex-1 flex flex-wrap items-center gap-4">
-                    <div className="relative w-full lg:w-72">
-                        <MagnifyingGlassIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-                        <input
-                            type="text"
-                            placeholder="Search key with ID or name"
-                            className={`w-full pl-12 pr-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-bumble-yellow/20 transition-all shadow-sm text-sm ${isDarkMode ? 'bg-zinc-800 border-zinc-700 text-white placeholder-zinc-500' : 'bg-white border-gray-100 text-gray-900 placeholder-gray-400'}`}
-                            value={search}
-                            onChange={(e) => setSearch(e.target.value)}
-                        />
-                    </div>
+           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 w-full overflow-x-hidden">
+  
+  <div className="flex-1 flex flex-wrap items-center gap-4 min-w-0">
+    
+    {/* Search */}
+    <div className="relative w-full lg:w-72 min-w-0">
+      <MagnifyingGlassIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+      <input
+        type="text"
+        placeholder="Search key with ID or name"
+        className={`w-full min-w-0 pl-12 pr-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-bumble-yellow/20 transition-all shadow-sm text-sm 
+          ${isDarkMode 
+            ? 'bg-zinc-800 border-zinc-700 text-white placeholder-zinc-500' 
+            : 'bg-white border-gray-100 text-gray-900 placeholder-gray-400'
+          }`}
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+      />
+    </div>
 
-                    <div className="flex items-center gap-2">
-                        <span className="text-xs font-bold text-secondary uppercase tracking-wider whitespace-nowrap">Status</span>
-                        <select
-                            className={`px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-bumble-yellow/20 transition-all shadow-sm text-sm font-medium min-w-[140px] ${isDarkMode ? 'bg-zinc-800 border-zinc-700 text-white' : 'bg-white border-gray-100 text-gray-900'}`}
-                            value={statusFilter}
-                            onChange={(e) => setStatusFilter(e.target.value)}
-                        >
-                            {statusOptions.map((option) => (
-                                <option key={option.value} value={option.value}>
-                                    {option.label}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
+    {/* Status */}
+    <div className="flex items-center gap-2 min-w-0">
+      <span className="text-xs font-bold text-secondary uppercase tracking-wider whitespace-nowrap">
+        Status
+      </span>
+      <select
+        className={`px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-bumble-yellow/20 transition-all shadow-sm text-sm font-medium 
+          w-full lg:min-w-[140px]
+          ${isDarkMode ? 'bg-zinc-800 border-zinc-700 text-white' : 'bg-white border-gray-100 text-gray-900'}
+        `}
+        value={statusFilter}
+        onChange={(e) => setStatusFilter(e.target.value)}
+      >
+        {statusOptions.map(option => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+    </div>
 
-                    <div className="flex items-center gap-2">
-                        <span className="text-xs font-bold text-secondary uppercase tracking-wider whitespace-nowrap">BumbleHive</span>
-                        <select
-                            className={`px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-bumble-yellow/20 transition-all shadow-sm text-sm font-medium min-w-[200px] ${isDarkMode ? 'bg-zinc-800 border-zinc-700 text-white' : 'bg-white border-gray-100 text-gray-900'}`}
-                            value={hiveFilter}
-                            onChange={(e) => setHiveFilter(e.target.value)}
-                        >
-                            <option value="all">All BumbleHives</option>
-                            {hives.map((hive) => (
-                                <option key={hive.id} value={hive.id}>
-                                    {hive.name}
-                                    {hive.location_name ? ` - ${hive.location_name}` : ''}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
+    {/* BumbleHive */}
+    <div className="flex items-center gap-2 min-w-0">
+      <span className="text-xs font-bold text-secondary uppercase tracking-wider whitespace-nowrap">
+        BumbleHive
+      </span>
+      <select
+        className={`px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-bumble-yellow/20 transition-all shadow-sm text-sm font-medium 
+          w-full lg:min-w-[200px]
+          ${isDarkMode ? 'bg-zinc-800 border-zinc-700 text-white' : 'bg-white border-gray-100 text-gray-900'}
+        `}
+        value={hiveFilter}
+        onChange={(e) => setHiveFilter(e.target.value)}
+      >
+        <option value="all">All BumbleHives</option>
+        {hives.map(hive => (
+          <option key={hive.id} value={hive.id}>
+            {hive.name}{hive.location_name ? ` - ${hive.location_name}` : ''}
+          </option>
+        ))}
+      </select>
+    </div>
 
-                    <Button
-                        
-                        onClick={() => { setSearch(''); setStatusFilter('all'); setHiveFilter('all'); setCurrentPage(1); }}
-                        className="px-6 py-3 whitespace-nowrap"
-                    >
-                        Reset Filters
-                    </Button>
-                </div>
+    <Button
+      onClick={() => {
+        setSearch('');
+        setStatusFilter('all');
+        setHiveFilter('all');
+        setCurrentPage(1);
+      }}
+      className="px-6 py-3 whitespace-nowrap"
+    >
+      Reset Filters
+    </Button>
+  </div>
 
-                <Link to="/host/keys/new">
-                    <Button variant="bumble" className="px-8 py-3 whitespace-nowrap">
-                        Add New Key
-                    </Button>
-                </Link>
-            </div>
+  <Link to="/host/keys/new">
+    <Button variant="bumble" className="px-8 py-3 whitespace-nowrap">
+      Add New Key
+    </Button>
+  </Link>
+</div>
+
 
             <div className="space-y-3">
-                {keys.map((key) => (
-                    <Link
-                        key={key.id}
-                        to={`/host/keys/${key.id}`}
-                        className={`block p-5 rounded-xl border shadow-sm transition-all group ${isDarkMode ? 'bg-zinc-900 border-zinc-800 hover:border-bumble-yellow/30' : 'bg-white border-gray-50 hover:border-bumble-yellow/50'}`}
-                    >
-                        <div className="grid grid-cols-1 md:grid-cols-12 items-center gap-4">
-                            <div className="md:col-span-2 font-bold text-primary text-sm">{key.label}</div>
+                {isLoading ? (
+                    <TableShimmer rows={6} cols={5} />
+                ) : (
+                    <>
+                        {keys.map((key) => (
+                            <Link
+                                key={key.id}
+                                to={`/host/keys/${key.id}`}
+                                className={`block p-5 rounded-xl border shadow-sm transition-all group ${isDarkMode ? 'bg-zinc-900 border-zinc-800 hover:border-bumble-yellow/30' : 'bg-white border-gray-50 hover:border-bumble-yellow/50'}`}
+                            >
+                                <div className="grid grid-cols-1 md:grid-cols-12 items-center gap-4">
+                                    <div className="md:col-span-2 font-bold text-primary text-sm">{key.label}</div>
 
-                            <div className="md:col-span-2 text-sm text-secondary">
-                                {formatStatus(key.status)}
-                            </div>
+                                    <div className="md:col-span-2 text-sm text-secondary">
+                                        {formatStatus(key.status)}
+                                    </div>
 
-                            <div className="md:col-span-3 text-sm text-primary font-medium">
-                                {getStatusDisplay(key)}
-                            </div>
+                                    <div className="md:col-span-3 text-sm text-primary font-medium">
+                                        {getStatusDisplay(key)}
+                                    </div>
 
-                            <div className="md:col-span-4 text-sm text-secondary truncate">
-                                {key.current_assignment?.cell?.hive?.address || key.property?.address || '21-22 Embankment Pl, London WC2N 6NN, UK'}
-                            </div>
+                                    <div className="md:col-span-4 text-sm text-secondary truncate">
+                                        {key.current_assignment?.cell?.hive?.address || key.property?.address || '21-22 Embankment Pl, London WC2N 6NN, UK'}
+                                    </div>
 
-                            <div className="md:col-span-1 flex justify-end">
-                                <div className={`p-2 rounded-lg transition-colors ${isDarkMode ? 'group-hover:bg-zinc-800' : 'group-hover:bg-gray-50'}`}>
-                                    <PencilIcon className="h-5 w-5 text-gray-400 group-hover:text-primary" />
+                                    <div className="md:col-span-1 flex justify-end">
+                                        <div className={`p-2 rounded-lg transition-colors ${isDarkMode ? 'group-hover:bg-zinc-800' : 'group-hover:bg-gray-50'}`}>
+                                            <PencilIcon className="h-5 w-5 text-gray-400 group-hover:text-primary" />
+                                        </div>
+                                    </div>
                                 </div>
-                            </div>
-                        </div>
-                    </Link>
-                ))}
+                            </Link>
+                        ))}
 
-                {keys.length === 0 && (
-                    <div className={`rounded-3xl border p-20 text-center ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-gray-100'}`}>
-                        <div className={`w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 ${isDarkMode ? 'bg-zinc-800' : 'bg-gray-50'}`}>
-                            <ArrowPathIcon className="h-10 w-10 text-gray-300" />
-                        </div>
-                        <h3 className="text-xl font-bold text-primary mb-2">No keys found</h3>
-                        <p className="text-secondary max-w-xs mx-auto mb-8">
-                            We couldn't find any keys matching your search or filters.
-                        </p>
-                        <Button variant="outline" onClick={() => { setSearch(''); setStatusFilter('all'); }}>
-                            Clear all filters
-                        </Button>
-                    </div>
+                        {keys.length === 0 && (
+                            <div className={`rounded-3xl border p-20 text-center ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-gray-100'}`}>
+                                <div className={`w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 ${isDarkMode ? 'bg-zinc-800' : 'bg-gray-50'}`}>
+                                    <ArrowPathIcon className="h-10 w-10 text-gray-300" />
+                                </div>
+                                <h3 className="text-xl font-bold text-primary mb-2">No keys found</h3>
+                                <p className="text-secondary max-w-xs mx-auto mb-8">
+                                    We couldn't find any keys matching your search or filters.
+                                </p>
+                                <Button variant="outline" onClick={() => { setSearch(''); setStatusFilter('all'); }}>
+                                    Clear all filters
+                                </Button>
+                            </div>
+                        )}
+                    </>
                 )}
             </div>
 
