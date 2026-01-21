@@ -150,6 +150,8 @@ const KeyRegisTrationNew = () => {
         trial_days: 14,
         currency: 'AUD',
     });
+
+    const [hasLocalData, setHasLocalData] = useState(false);    
     const [preselectedHiveId, setPreselectedHiveId] = useState<number | null>(null);
 
     const [isPropertyModalOpen, setIsPropertyModalOpen] = useState(false);
@@ -207,6 +209,9 @@ const KeyRegisTrationNew = () => {
             }
         }
 
+        if(storedHive && storedPlan) {
+            setHasLocalData(true);
+        }
 
         localStorage.removeItem('public_bumblekey_selection');
         localStorage.removeItem('public_bumblekey_plan'); 
@@ -215,18 +220,32 @@ const KeyRegisTrationNew = () => {
     }, [isEdit]);
 
 
-    useEffect(() => {
-    if (!formData.package_type) return;
+// useEffect(() => {
+//     if (!formData.package_type) return;
 
-    const timer = setTimeout(() => {
-        formRef.current?.scrollIntoView({
-            behavior: 'smooth',
-            block: 'end',
-        });
-    }, 500); // half second
+    
+//     const timer = setTimeout(() => {
+//         formRef.current?.scrollIntoView({
+//             behavior: 'smooth',
+//             block: 'end',
+//         });
+//     }, 500); // half second
 
-    return () => clearTimeout(timer);
-}, [formData.package_type]);
+//     return () => clearTimeout(timer);
+
+// }, [formData.package_type]);
+
+    useEffect(()=>{
+        if(hasLocalData){
+           setTimeout(()=>{
+                formRef.current?.scrollIntoView({
+                    behavior:'smooth',
+                    block:'end',
+                });
+                setHasLocalData(false);
+            },500);
+        }
+    },[hasLocalData]);
 
     useEffect(() => {
         const fetchAllHives = async () => {
