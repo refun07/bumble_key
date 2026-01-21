@@ -21,6 +21,69 @@ class HostPropertyController extends Controller
         ]);
     }
 
+
+    public function propertyList(Request $request)
+    {
+        $query = $request->user()
+            ->properties()
+            ->with([
+                'host:id,name,email',
+                'keys',
+            ])
+            ->select('properties.*');
+
+        /**
+         * Search
+         */
+        if ($request->filled('search')) {
+            $search = $request->search;
+
+            $query->where(function ($q) use ($search) {
+                $q->where('title', 'like', "%{$search}%")
+                    ->orWhere('description', 'like', "%{$search}%")
+                    ->orWhere('address', 'like', "%{$search}%")
+                    ->orWhere('city', 'like', "%{$search}%")
+                    ->orWhere('state', 'like', "%{$search}%")
+                    ->orWhere('country', 'like', "%{$search}%")
+                    ->orWhere('postal_code', 'like', "%{$search}%");
+            });
+        }
+
+        /**
+         * Active status filter
+         */
+        if ($request->filled('is_active')) {
+            $query->where('is_active', $request->boolean('is_active'));
+        }
+
+        /**
+         * Sorting
+         */
+        $allowedSorts = [
+            'title',
+            'city',
+            'created_at',
+            'is_active',
+        ];
+
+        $sortBy = $request->get('sort_by', 'created_at');
+        $sortOrder = $request->get('sort_order', 'desc');
+
+        if (! in_array($sortBy, $allowedSorts)) {
+            $sortBy = 'created_at';
+        }
+
+        $query->orderBy($sortBy, $sortOrder);
+
+        /**
+         * Pagination
+         */
+        $perPage = $request->get('per_page', 20);
+
+        return response()->json(
+            $query->paginate($perPage)
+        );
+    }
     public function store(StorePropertyRequest $request)
     {
         $property = $request->user()->properties()->create($request->validated());

@@ -45,6 +45,7 @@ import ToastContainer from './components/common/ToastContainer';
 import Locations from './pages/Locations';
 import AppLoader from './components/common/AppLoader';
 import PublicBumbleKeyFlow from './pages/public/PublicBumbleKeyFlow';
+import Properties from './pages/host/Properties';
 
 
 // Smart Dashboard Redirect
@@ -154,6 +155,7 @@ function App() {
         >
           <Route path="dashboard" element={<React.Suspense fallback={<AppLoader/>}><HostDashboard /></React.Suspense>} />
           <Route path="keys" element={<HostKeyList />} />
+           <Route path="properties" element={<Properties />} />
           <Route path="keys/new" element={<KeyRegisTrationNew />} />
           <Route path="keys/:id/edit" element={<KeyRegisTrationNew />} />
           <Route path="keys/:id" element={<HostKeyDetailsHost />} />

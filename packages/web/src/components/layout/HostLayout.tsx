@@ -17,7 +17,8 @@ import {
     MoonIcon,
     UserCircleIcon,
     Bars3Icon,
-    XMarkIcon
+    XMarkIcon,
+    BuildingOfficeIcon
 } from '@heroicons/react/24/outline';
 import { ChevronDownIcon } from '@heroicons/react/20/solid';
 
@@ -62,6 +63,7 @@ const HostLayout = () => {
     const navigation = [
         { name: 'Dashboard', href: '/host/dashboard', icon: HomeIcon },
         { name: 'My Keys', href: '/host/keys', icon: KeyIcon },
+        { name: 'Properties', href: '/host/properties', icon: BuildingOfficeIcon },
         { name: 'Analytics', href: '/host/analytics', icon: ChartBarIcon },
         { name: 'BumbleHive Points', href: '/host/points', icon: GiftIcon },
         { name: 'Integration', href: '/host/integration', icon: PuzzlePieceIcon },
