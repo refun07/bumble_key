@@ -100,6 +100,29 @@ const mapStyles = [
     }
 ];
 
+    const getMarkerIcon = (isSelected: boolean) => ({
+        url:
+            'data:image/svg+xml;charset=UTF-8,' +
+            encodeURIComponent(`
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 32">
+                <path
+                    d="M12 0C5.4 0 0 5.4 0 12c0 9 12 20 12 20s12-11 12-20c0-6.6-5.4-12-12-12z"
+                    fill="${isSelected ? '#111827' : '#EA580C'}"
+                />
+                <circle cx="12" cy="11" r="${isSelected ? 5 : 4}" fill="#ffffff"/>
+            </svg>
+        `),
+        scaledSize: new google.maps.Size(
+            isSelected ? 36 : 28,
+            isSelected ? 48 : 38
+        ),
+        anchor: new google.maps.Point(
+            isSelected ? 18 : 14,
+            isSelected ? 48 : 38
+        ),
+    });
+
+
 const Locations = () => {
     const [hives, setHives] = useState<Hive[]>([]);
     const [filteredHives, setFilteredHives] = useState<Hive[]>([]);
@@ -121,9 +144,21 @@ const Locations = () => {
         trial_days: 14,
         currency: 'AUD'
     });
+
+    useEffect(() => {
+        setSelectedHive(null);
+        setShowPlanSelect(false);
+    }, []);
+
     const navigate = useNavigate();
 
-    const isMobile = window.matchMedia('(max-width: 768px)').matches;
+    const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+    useEffect(() => {
+        const onResize = () => setIsMobile(window.innerWidth < 768);
+        window.addEventListener('resize', onResize);
+        return () => window.removeEventListener('resize', onResize);
+    }, []);
 
 
     const { isLoaded } = useJsApiLoader({
@@ -142,6 +177,19 @@ const Locations = () => {
     useEffect(() => {
         fetchHives();
     }, []);
+
+    useEffect(() => {
+    // Immediate reset
+    window.scrollTo(0, 0);
+
+    // Backup reset after map render
+    const t = setTimeout(() => {
+        window.scrollTo(0, 0);
+    }, 50);
+
+    return () => clearTimeout(t);
+}, []);
+
 
     useEffect(() => {
         const fetchPricing = async () => {
@@ -195,12 +243,47 @@ const Locations = () => {
         }
     };
 
-    const handleMarkerClick = (hive: Hive) => {
-        setSelectedHive(hive);
-        if (map && hive.latitude && hive.longitude) {
-            map.panTo({ lat: Number(hive.latitude), lng: Number(hive.longitude) });
-        }
-    };
+ 
+
+        // const handleMarkerClick = (hive: Hive) => {
+        //     if (selectedHive?.id === hive.id) return;
+
+        //     setSelectedHive(hive);
+
+        //     console.log(hive);
+
+        //     if (map && hive.latitude && hive.longitude) {
+        //         const lat = Number(hive.latitude);
+        //         const lng = Number(hive.longitude);
+
+        //         map.panTo({
+        //             lat: isMobile ? lat - 0.002 : lat,
+        //             lng,
+        //         });
+
+        //         map.setZoom(15);
+        //     }
+        // };
+
+        const handleMarkerClick = (hive: Hive) => {
+    setSelectedHive(prev => {
+        if (prev?.id === hive.id) return prev;
+        return hive;
+    });
+
+    if (map && hive.latitude && hive.longitude) {
+        const lat = Number(hive.latitude);
+        const lng = Number(hive.longitude);
+
+        map.panTo({
+            lat: isMobile ? lat - 0.0025 : lat,
+            lng,
+        });
+
+        map.setZoom(15);
+    }
+};
+
 
     const handleSearchItemClick = (hive: Hive) => {
         setSelectedHive(hive);
@@ -247,15 +330,14 @@ const Locations = () => {
     };
 
     return (
-     <div
-            className="
-                relative w-full bg-gray-100 overflow-hidden
-                h-[85vh]
-                md:h-[90vh]
-                lg:h-[92vh]
-                max-md:h-[65vh]
-            "
-            >
+     <div className="
+            relative w-full bg-gray-100 overflow-hidden
+            h-[85vh]
+            md:h-[90vh]
+            lg:h-[92vh]
+            max-md:h-[70vh]
+        ">
+
 
 
             {/* Full Screen Map */}
@@ -266,7 +348,13 @@ const Locations = () => {
                     zoom={10}
                     onLoad={onLoad}
                     onUnmount={onUnmount}
-                    onClick={() => setSelectedHive(null)}
+                    onClick={() => {
+                    // Only close if a hive is already open
+                        if (selectedHive) {
+                            setSelectedHive(null);
+                        }
+                    }}
+
                     options={{
                         styles: mapStyles,
                         disableDefaultUI: true,
@@ -274,98 +362,41 @@ const Locations = () => {
                         zoomControlOptions: {
                             position: google.maps.ControlPosition.RIGHT_CENTER
                         },
-                        fullscreenControl: false
+                        fullscreenControl: false,
+                        gestureHandling: 'greedy'
                     }}
                 >
                     {/* Markers */}
-                    {hives.map((hive) => (
-                        hive.latitude && hive.longitude && (
+                   {hives.map((hive) => {
+                    const isSelected = selectedHive?.id === hive.id;
+
+                    return (
+                        hive.latitude &&
+                        hive.longitude && (
                             <Marker
                                 key={hive.id}
-                                position={{ lat: Number(hive.latitude), lng: Number(hive.longitude) }}
-                                onClick={() => handleMarkerClick(hive)}
-                                icon={{
-                                    url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
-                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 32" width="28" height="38">
-                                            <path d="M12 0C5.4 0 0 5.4 0 12c0 9 12 20 12 20s12-11 12-20c0-6.6-5.4-12-12-12z" fill="#EA580C"/>
-                                            <circle cx="12" cy="11" r="4" fill="#ffffff"/>
-                                        </svg>
-                                    `),
-                                    scaledSize: new google.maps.Size(28, 38),
-                                    anchor: new google.maps.Point(14, 38)
+                                position={{
+                                    lat: Number(hive.latitude),
+                                    lng: Number(hive.longitude),
                                 }}
+                                onClick={() => handleMarkerClick(hive)}
+                                icon={getMarkerIcon(isSelected)}
+                                zIndex={isSelected ? 999 : 1}
                             />
                         )
-                    ))}
+                    );
+                })}
+
 
                     {/* Custom Popup Card */}
-                    {selectedHive && selectedHive.latitude && selectedHive.longitude && (
-                        // <OverlayView
-                        //     position={{ lat: Number(selectedHive.latitude), lng: Number(selectedHive.longitude) }}
-                        //     mapPaneName={OverlayView.OVERLAY_MOUSE_TARGET}
-                        //     getPixelPositionOffset={(width, height) => ({
-                        //         x: -(width / 2),
-                        //         y: -(height + 45)
-                        //     })}
-                        // >
-                        //     <div className="bg-white rounded-lg shadow-xl w-72 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-                        //         {/* Close button */}
-                        //         <button
-                        //             onClick={() => setSelectedHive(null)}
-                        //             className="absolute top-2 right-2 z-10 bg-white/80 rounded-full p-1 hover:bg-white transition-colors"
-                        //         >
-                        //             <XMarkIcon className="w-4 h-4 text-gray-600" />
-                        //         </button>
-
-                        //         {/* Image */}
-                        //         <div className="relative h-36 bg-gray-200">
-                        //             {selectedHive.photos && selectedHive.photos.length > 0 ? (
-                        //                 <img
-                        //                     src={selectedHive.photos[0]}
-                        //                     alt={selectedHive.name}
-                        //                     className="w-full h-full object-cover"
-                        //                 />
-                        //             ) : (
-                        //                 <img
-                        //                     src="/bumblehive_location_default.png"
-                        //                     alt="BumbleHive Location"
-                        //                     className="w-full h-full object-cover"
-                        //                 />
-                        //             )}
-                        //         </div>
-
-                        //         {/* Content */}
-                        //         <div className="p-4">
-                        //             <h3 className="font-bold text-gray-900 text-base mb-1">
-                        //                 {selectedHive.location_name} - {selectedHive.name}
-                        //             </h3>
-                        //             <p className="text-sm text-gray-600 mb-3">
-                        //                 {selectedHive.address}, {selectedHive.city} {selectedHive.postal_code}, {selectedHive.country}
-                        //             </p>
-
-                        //             {selectedHive.operating_hours && (
-                        //                 <div className="mb-4">
-                        //                     <p className="text-xs font-bold text-gray-900 uppercase tracking-wide mb-1">
-                        //                         Opening Hours
-                        //                     </p>
-                        //                     <p className="text-sm text-gray-600">
-                        //                         Mon - Sat: {selectedHive.operating_hours.open} - {selectedHive.operating_hours.close}
-                        //                     </p>
-                        //                     <p className="text-sm text-gray-600">
-                        //                         Sun: {selectedHive.operating_hours.open} - {selectedHive.operating_hours.close}
-                        //                     </p>
-                        //                 </div>
-                        //             )}
-
-                        //             <button
-                        //                 onClick={handleUseHive}
-                        //                 className="w-full bg-gray-900 text-white py-2.5 px-4 rounded-md font-medium text-sm hover:bg-gray-800 transition-colors"
-                        //             >
-                        //                 Use This BumbleHive
-                        //             </button>
-                        //         </div>
-                        //     </div>
-                        // </OverlayView>
+                {!isMobile && selectedHive && selectedHive.latitude && selectedHive.longitude && (
+                        <div
+                            className="relative bg-white rounded-lg shadow-xl w-72 overflow-hidden
+                                    touch-manipulation select-none"
+                            onClick={(e) => e.stopPropagation()}
+                            onMouseDown={(e) => e.stopPropagation()}
+                            onTouchStart={(e) => e.stopPropagation()}
+                        >
 
 
                         <OverlayView
@@ -375,18 +406,27 @@ const Locations = () => {
                             }}
                             mapPaneName={OverlayView.OVERLAY_MOUSE_TARGET}
                             getPixelPositionOffset={(width, height) => {
+                            const padding = 12;
+
                             if (isMobile) {
+                                const maxWidth = window.innerWidth - padding * 2;
+
+                                const safeX =
+                                    width > maxWidth
+                                        ? -(maxWidth / 2)
+                                        : -(width / 2);
+
                                 return {
-                                x: -(width / 2),
-                                y: 20, // show BELOW marker on mobile
+                                    x: safeX,
+                                    y: padding + 12, // below marker
                                 };
                             }
 
                             return {
                                 x: -(width / 2),
-                                y: -(height + 45), // desktop: above marker
+                                y: -(height + padding + 38),
                             };
-                            }}
+                        }}
 
                             >
                             <div
@@ -460,7 +500,8 @@ const Locations = () => {
                                 </button>
                                 </div>
                             </div>
-                            </OverlayView>
+                        </OverlayView>
+                        </div>
 
                     )}
                 </GoogleMap>
@@ -594,6 +635,85 @@ const Locations = () => {
                     </div>
                 </div>
             )}
+
+
+            {/* Mobile Bottom Action Bar */}
+      {isMobile && selectedHive && (
+            <div className="fixed inset-0 flex items-end z-10">
+                {/* Backdrop */}
+                <div
+                    className="absolute inset-0 bg-black/40 transition-opacity"
+                    onClick={() => setSelectedHive(null)}
+                />
+
+                {/* Bottom Sheet */}
+                <div
+                    className="
+                        relative w-full rounded-t-2xl bg-white shadow-2xl
+                        transform transition-transform duration-300 ease-out
+                     
+                    "
+                   
+                >
+                    {/* Handle */}
+                    <div className="flex justify-center pt-3">
+                        <div className="h-1.5 w-12 rounded-full bg-gray-300" />
+                    </div>
+
+                    {/* Close Button */}
+                    <button
+                        onClick={() => setSelectedHive(null)}
+                        className="absolute right-4 top-4 rounded-full p-2 text-gray-500 hover:bg-gray-100"
+                    >
+                        <XMarkIcon className="h-5 w-5" />
+                    </button>
+
+                    {/* Content */}
+                    <div className="px-5 pt-6 pb-6 space-y-4">
+                        {/* Title */}
+                        <div>
+                            <h3 className="text-base font-semibold text-gray-900">
+                                {selectedHive.location_name} – {selectedHive.name}
+                            </h3>
+                            <p className="text-sm text-gray-500">
+                                {selectedHive.address}, {selectedHive.city},{" "}
+                                {selectedHive.postal_code}
+                            </p>
+                        </div>
+
+                        {/* Info Grid */}
+                        <div className="grid grid-cols-2 gap-3 text-sm">
+                            <div className="rounded-lg bg-gray-50 p-3">
+                                <p className="text-xs text-gray-500">Available Cells</p>
+                                <p className="font-semibold text-gray-900">
+                                    {selectedHive.available_cells} / {selectedHive.total_cells}
+                                </p>
+                            </div>
+
+                            {selectedHive.operating_hours && (
+                                <div className="rounded-lg bg-gray-50 p-3">
+                                    <p className="text-xs text-gray-500">Operating Hours</p>
+                                    <p className="font-semibold text-gray-900">
+                                        {selectedHive.operating_hours.open} –{" "}
+                                        {selectedHive.operating_hours.close}
+                                    </p>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* CTA */}
+                        <button
+                            onClick={handleUseHive}
+                            className="mt-4 w-full rounded-xl bg-gray-900 py-3 text-sm font-semibold text-white active:scale-[0.98]"
+                        >
+                            Use This BumbleHive
+                        </button>
+                    </div>
+                </div>
+            </div>
+        )}
+
+
         </div>
     );
 };
