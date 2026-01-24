@@ -113,6 +113,7 @@ class KeyPaymentController extends Controller
             'type' => 'host_fee',
             'status' => 'completed',
             'payment_method' => $intent->payment_method_types[0] ?? null,
+            'payment_gateway' => 'stripe',
             'payment_gateway_ref' => $intent->id,
             'invoice_id' => $intent->latest_charge ?? null,
         ]);

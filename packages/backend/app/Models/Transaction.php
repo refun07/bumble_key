@@ -16,6 +16,7 @@ class Transaction extends Model
         'currency',
         'type', // host_fee, partner_payout, guest_fee, refund
         'status', // pending, completed, failed, refunded
+        'payment_gateway',
         'payment_method',
         'payment_gateway_ref',
         'invoice_id',

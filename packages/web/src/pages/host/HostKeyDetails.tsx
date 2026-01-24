@@ -39,6 +39,16 @@ interface Assignment {
     picked_up_at: string | null;
     returned_at: string | null;
     closed_at: string | null;
+    transactions?: Array<{
+        id: number;
+        amount: string;
+        currency: string;
+        status: 'pending' | 'completed' | 'failed' | 'refunded';
+        payment_method: string | null;
+        payment_gateway?: string | null;
+        payment_gateway_ref: string | null;
+        created_at: string;
+    }>;
 }
 
 interface Key {
@@ -71,6 +81,7 @@ const HostKeyDetails = () => {
         setIsLoading(true);
         try {
             const response = await api.get(`/hosts/keys/${id}`);
+            console.log(response.data.data);
             setKey(response.data.data);
         } catch (error) {
             console.error('Failed to fetch key details', error);
@@ -124,6 +135,14 @@ const HostKeyDetails = () => {
     // Helper to format package type
     const formatPackageType = (type: string) => {
         return type.charAt(0).toUpperCase() + type.slice(1).replace('_', ' ') + ' Package';
+    };
+
+    const getTransactionBadgeClass = (status: string) => {
+        if (status === 'completed') return 'bg-green-100 text-green-700';
+        if (status === 'pending') return 'bg-yellow-100 text-yellow-700';
+        if (status === 'failed') return 'bg-red-100 text-red-700';
+        if (status === 'refunded') return 'bg-gray-200 text-gray-700';
+        return 'bg-gray-100 text-gray-600';
     };
 
     // Build timeline events from assignments
@@ -231,6 +250,43 @@ const HostKeyDetails = () => {
                             <p className="text-sm text-secondary font-medium capitalize">
                                 {formatPackageType(key.package_type)}
                             </p>
+                        </div>
+
+                        <div>
+                            <h4 className="text-xs font-bold text-secondary uppercase tracking-widest mb-2">Transactions</h4>
+                            {key.current_assignment?.transactions?.length ? (
+                                <div className="space-y-3">
+                                    {key.current_assignment.transactions.map((transaction) => (
+                                        <div
+                                            key={transaction.id}
+                                            className={`rounded-xl border px-4 py-3 text-sm ${isDarkMode ? 'border-zinc-800 bg-zinc-900/60 text-white' : 'border-gray-100 bg-white text-gray-900'}`}
+                                        >
+                                            <div className="flex flex-wrap items-center justify-between gap-3">
+                                                <div className="font-semibold">
+                                                    {transaction.currency} {Number(transaction.amount).toFixed(2)}
+                                                </div>
+                                                <span className={`rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide ${getTransactionBadgeClass(transaction.status)}`}>
+                                                    {transaction.status}
+                                                </span>
+                                            </div>
+                                            <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-secondary">
+                                                <span>{transaction.payment_method || 'Unknown method'}</span>
+                                                {transaction.payment_gateway && (
+                                                    <span className="uppercase">{transaction.payment_gateway}</span>
+                                                )}
+                                                {transaction.payment_gateway_ref && (
+                                                    <span className="font-mono text-[10px] text-gray-400">{transaction.payment_gateway_ref}</span>
+                                                )}
+                                                <span>{format(new Date(transaction.created_at), 'd MMMM yy hh:mm a')}</span>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="rounded-xl border px-4 py-3 text-xs text-secondary">
+                                    No transactions found.
+                                </div>
+                            )}
                         </div>
                     </div>
 

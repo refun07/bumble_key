@@ -20,8 +20,9 @@ class KeyController extends Controller
         ]);
 
         $query = $request->user()->keys()
-            ->with(['property', 'currentAssignment.cell.hive'])
+            ->with(['property', 'currentAssignment.cell.hive','currentAssignment.transactions'])
             ->latest();
+
 
         if ($request->filled('status') && $request->status !== 'all') {
             $query->where('status', $request->status);
@@ -144,7 +145,8 @@ class KeyController extends Controller
                 'currentAssignment.nfcFob',
                 'assignments' => function ($query) {
                     $query->with(['cell.hive', 'guest', 'nfcFob'])->latest();
-                }
+                },
+                'currentAssignment.transactions'
             ])
             ->findOrFail($id);
 

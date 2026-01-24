@@ -26,7 +26,13 @@ interface Key {
                 name: string;
                 address: string;
             }
-        }
+        };
+        transactions?: Array<{
+            id: number;
+            amount: string;
+            currency: string;
+            status: 'pending' | 'completed' | 'failed' | 'refunded';
+        }>;
     };
 }
 
@@ -75,7 +81,6 @@ const HostKeyList = () => {
                 }),
                 api.get('/hives/public')
             ]);
-
             setKeys(keysResponse.data.data);
             setCurrentPage(keysResponse.data.current_page || 1);
             setLastPage(keysResponse.data.last_page || 1);
@@ -114,6 +119,14 @@ const HostKeyList = () => {
             case 'in_use': return 'In use';
             default: return 'Inactive';
         }
+    };
+
+    const getTransactionBadgeClass = (status: string) => {
+        if (status === 'completed') return 'bg-green-100 text-green-700';
+        if (status === 'pending') return 'bg-yellow-100 text-yellow-700';
+        if (status === 'failed') return 'bg-red-100 text-red-700';
+        if (status === 'refunded') return 'bg-gray-200 text-gray-700';
+        return 'bg-gray-100 text-gray-600';
     };
 
     return (
@@ -220,11 +233,30 @@ const HostKeyList = () => {
                                         {formatStatus(key.status)}
                                     </div>
 
-                                    <div className="md:col-span-3 text-sm text-primary font-medium">
+                                    <div className="md:col-span-2 text-sm text-primary font-medium">
                                         {getStatusDisplay(key)}
                                     </div>
 
-                                    <div className="md:col-span-4 text-sm text-secondary truncate">
+                                    <div className="md:col-span-3 text-sm text-secondary">
+                                        <div className="flex flex-wrap gap-2">
+                                            {key.current_assignment?.transactions?.length ? (
+                                                key.current_assignment.transactions.map((transaction) => (
+                                                    <span
+                                                        key={transaction.id}
+                                                        className={`rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide ${getTransactionBadgeClass(transaction.status)}`}
+                                                    >
+                                                        {transaction.status}
+                                                    </span>
+                                                ))
+                                            ) : (
+                                                <span className="rounded-full bg-gray-100 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-gray-500">
+                                                    No payments
+                                                </span>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    <div className="md:col-span-2 text-sm text-secondary truncate">
                                         {key.current_assignment?.cell?.hive?.address || key.property?.address || '21-22 Embankment Pl, London WC2N 6NN, UK'}
                                     </div>
 
