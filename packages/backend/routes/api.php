@@ -20,6 +20,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('hosts/properties', \App\Http\Controllers\Api\HostPropertyController::class);
     Route::get('hosts/properties-list', [\App\Http\Controllers\Api\HostPropertyController::class, 'propertyList']);
     Route::apiResource('hosts/keys', \App\Http\Controllers\Api\KeyController::class);
+    Route::post('hosts/keys/{key}/payment-intent', [\App\Http\Controllers\Api\KeyPaymentController::class, 'createIntent']);
+    Route::post('hosts/keys/{key}/payment-confirm', [\App\Http\Controllers\Api\KeyPaymentController::class, 'confirmPayment']);
 
     // Public/Shared Routes
     Route::get('hives', [\App\Http\Controllers\Api\HiveController::class, 'index']);

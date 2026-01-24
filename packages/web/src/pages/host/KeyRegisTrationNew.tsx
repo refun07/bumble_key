@@ -5,6 +5,8 @@ import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import type { LatLngTuple } from 'leaflet';
 import { MagnifyingGlassIcon, MapPinIcon, XMarkIcon, PlusIcon, ChevronLeftIcon } from '@heroicons/react/24/outline';
+import { Elements, PaymentElement, useElements, useStripe } from '@stripe/react-stripe-js';
+import { loadStripe } from '@stripe/stripe-js';
 import { useTheme } from '../../store/theme';
 import api from '../../services/api';
 import { useToast } from '../../store/toast';
@@ -59,8 +61,80 @@ interface PricingData {
     currency: string;
 }
 
+type PackageType = 'pay_as_you_go' | 'monthly' | 'yearly';
+
+const PaymentForm = ({
+    isDarkMode,
+    amount,
+    currency,
+    planLabel,
+    onSuccess,
+    onClose,
+}: {
+    isDarkMode: boolean;
+    amount: number;
+    currency: string;
+    planLabel: string;
+    onSuccess: (paymentIntentId: string) => void;
+    onClose: () => void;
+}) => {
+    const stripe = useStripe();
+    const elements = useElements();
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [errorMessage, setErrorMessage] = useState('');
+
+    const handleSubmit = async (event: React.FormEvent) => {
+        event.preventDefault();
+        if (!stripe || !elements) return;
+
+        setIsSubmitting(true);
+        setErrorMessage('');
+
+        const { error, paymentIntent } = await stripe.confirmPayment({
+            elements,
+            confirmParams: {
+                return_url: `${window.location.origin}/host/keys`,
+            },
+            redirect: 'if_required',
+        });
+
+        if (error) {
+            setErrorMessage(error.message || 'Payment failed. Please try again.');
+            setIsSubmitting(false);
+            return;
+        }
+
+        if (paymentIntent?.status === 'succeeded') {
+            onSuccess(paymentIntent.id);
+        } else {
+            setErrorMessage('Payment requires additional verification.');
+            setIsSubmitting(false);
+        }
+    };
+
+    return (
+        <form onSubmit={handleSubmit} className="space-y-4">
+            <div className={`rounded-xl border p-3 text-sm font-semibold ${isDarkMode ? 'border-zinc-700 bg-zinc-800 text-white' : 'border-gray-200 bg-gray-50 text-gray-900'}`}>
+                {planLabel} — {currency} {amount.toFixed(2)}
+            </div>
+            <PaymentElement />
+            {errorMessage && <p className="text-sm text-red-500">{errorMessage}</p>}
+            <div className="flex gap-3 pt-2">
+                <Button type="button" className="flex-1 py-3" onClick={onClose}>
+                    Cancel
+                </Button>
+                <Button type="submit" variant="bumble" className="flex-1 py-3" isLoading={isSubmitting}>
+                    Pay Now
+                </Button>
+            </div>
+        </form>
+    );
+};
+
 const APP_URL = import.meta.env.VITE_APP_URL;
 const DEFAULT_COUNTRY = import.meta.env.VITE_DEFAULT_COUNTRY || 'Australia';
+const STRIPE_PUBLISHABLE_KEY = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || '';
+const stripePromise = STRIPE_PUBLISHABLE_KEY ? loadStripe(STRIPE_PUBLISHABLE_KEY) : null;
 
 const getKeyPhotoSrc = (photo?: string | null) => {
     if (!photo) return '';
@@ -153,6 +227,14 @@ const KeyRegisTrationNew = () => {
 
     const [hasLocalData, setHasLocalData] = useState(false);    
     const [preselectedHiveId, setPreselectedHiveId] = useState<number | null>(null);
+    const [initialPackageType, setInitialPackageType] = useState<PackageType | null>(null);
+    const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+    const [paymentKeyId, setPaymentKeyId] = useState<number | null>(null);
+    const [paymentClientSecret, setPaymentClientSecret] = useState<string | null>(null);
+    const [paymentAmount, setPaymentAmount] = useState(0);
+    const [paymentCurrency, setPaymentCurrency] = useState('USD');
+    const [paymentPlan, setPaymentPlan] = useState<PackageType>('monthly');
+    const [isCreatingPayment, setIsCreatingPayment] = useState(false);
 
     const [isPropertyModalOpen, setIsPropertyModalOpen] = useState(false);
     const [isAddingProperty, setIsAddingProperty] = useState(false);
@@ -297,6 +379,7 @@ const KeyRegisTrationNew = () => {
                         hive_id: keyData.current_assignment?.hive_id?.toString() || '',
                         photo: keyData.photo || ''
                     });
+                    setInitialPackageType(keyData.package_type as PackageType);
 
                     if (keyData.photo) {
                         setFileName('Current image');
@@ -376,6 +459,49 @@ const KeyRegisTrationNew = () => {
         return plan === 'monthly' ? 'Monthly' : 'Yearly';
     };
 
+    const createPaymentIntent = async (keyId: number, plan: PackageType) => {
+        if (!stripePromise) {
+            showToast('Stripe is not configured for this app.', 'error');
+            return;
+        }
+
+        setIsCreatingPayment(true);
+        try {
+            const response = await api.post(`/hosts/keys/${keyId}/payment-intent`, {
+                package_type: plan,
+            });
+
+            setPaymentClientSecret(response.data.client_secret);
+            setPaymentAmount(Number(response.data.amount));
+            setPaymentCurrency(response.data.currency || pricing.currency);
+            setPaymentPlan(plan);
+            setPaymentKeyId(keyId);
+            setIsPaymentModalOpen(true);
+        } catch (error) {
+            console.error('Failed to create payment intent', error);
+            showToast('Failed to start payment. Please try again.', 'error');
+        } finally {
+            setIsCreatingPayment(false);
+        }
+    };
+
+    const handlePaymentSuccess = async (paymentIntentId: string) => {
+        if (!paymentKeyId) return;
+
+        try {
+            await api.post(`/hosts/keys/${paymentKeyId}/payment-confirm`, {
+                payment_intent_id: paymentIntentId,
+                package_type: paymentPlan,
+            });
+            showToast('Payment completed successfully.', 'success');
+            setIsPaymentModalOpen(false);
+            navigate('/host/keys');
+        } catch (error) {
+            console.error('Failed to confirm payment', error);
+            showToast('Payment completed, but confirmation failed. Please contact support.', 'error');
+        }
+    };
+
     const handleAddProperty = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsAddingProperty(true);
@@ -421,14 +547,25 @@ const KeyRegisTrationNew = () => {
         setErrors({});
 
         try {
+            let keyId = id ? Number(id) : null;
             if (isEdit) {
-                await api.put(`/hosts/keys/${id}`, formData);
+                const response = await api.put(`/hosts/keys/${id}`, formData);
+                keyId = response.data?.data?.id ?? keyId;
                 showToast('Key updated successfully', 'success');
             } else {
-                await api.post('/hosts/keys', formData);
+                const response = await api.post('/hosts/keys', formData);
+                keyId = response.data?.data?.id ?? keyId;
                 showToast('Key registered successfully', 'success');
             }
-            navigate('/host/keys');
+
+            const plan = formData.package_type as PackageType;
+            const shouldCharge = !isEdit || plan !== initialPackageType;
+
+            if (keyId && shouldCharge) {
+                await createPaymentIntent(keyId, plan);
+            } else {
+                navigate('/host/keys');
+            }
         } catch (error: any) {
             if (error.response?.status === 422) {
                 setErrors(error.response.data.errors);
@@ -800,6 +937,88 @@ const KeyRegisTrationNew = () => {
                                                     </Button>
                                                 </div>
                                             </form>
+                                        </div>
+                                    </div>
+                                </Dialog.Panel>
+                            </Transition.Child>
+                        </div>
+                    </div>
+                </Dialog>
+            </Transition.Root>
+
+            <Transition.Root show={isPaymentModalOpen} as={Fragment}>
+                <Dialog
+                    as="div"
+                    className="relative z-50"
+                    onClose={() => {
+                        if (!isCreatingPayment) {
+                            setIsPaymentModalOpen(false);
+                        }
+                    }}
+                >
+                    <Transition.Child
+                        as={Fragment}
+                        enter="ease-out duration-300"
+                        enterFrom="opacity-0"
+                        enterTo="opacity-100"
+                        leave="ease-in duration-200"
+                        leaveFrom="opacity-100"
+                        leaveTo="opacity-0"
+                    >
+                        <div className={`fixed inset-0 backdrop-blur-sm transition-opacity ${isDarkMode ? 'bg-zinc-950/80' : 'bg-slate-900/60'}`} />
+                    </Transition.Child>
+
+                    <div className="fixed inset-0 z-10 overflow-y-auto">
+                        <div className="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+                            <Transition.Child
+                                as={Fragment}
+                                enter="ease-out duration-300"
+                                enterFrom="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                                enterTo="opacity-100 translate-y-0 sm:scale-100"
+                                leave="ease-in duration-200"
+                                leaveFrom="opacity-100 translate-y-0 sm:scale-100"
+                                leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                            >
+                                <Dialog.Panel className={`relative transform overflow-hidden rounded-2xl px-4 pb-4 pt-5 text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-lg sm:p-10 ${isDarkMode ? 'bg-zinc-900' : 'bg-white'}`}>
+                                    <div className="absolute right-0 top-0 hidden pr-6 pt-6 sm:block">
+                                        <button
+                                            type="button"
+                                            className={`rounded-full p-2 focus:outline-none transition-all ${isDarkMode ? 'bg-zinc-800 text-zinc-400 hover:text-white hover:bg-zinc-700' : 'bg-gray-100 text-gray-400 hover:text-gray-500 hover:bg-gray-200'}`}
+                                            onClick={() => setIsPaymentModalOpen(false)}
+                                            disabled={isCreatingPayment}
+                                        >
+                                            <XMarkIcon className="h-6 w-6" aria-hidden="true" />
+                                        </button>
+                                    </div>
+                                    <div className="sm:flex sm:items-start">
+                                        <div className="mt-3 text-center sm:ml-4 sm:mt-0 sm:text-left w-full">
+                                            <Dialog.Title as="h3" className="text-2xl font-bold leading-6 text-primary">
+                                                Complete Payment
+                                            </Dialog.Title>
+                                            <div className="mt-6">
+                                                {!paymentClientSecret || !stripePromise ? (
+                                                    <div className="text-sm text-secondary">
+                                                        Stripe is not configured. Please add your publishable key.
+                                                    </div>
+                                                ) : (
+                                                    <Elements
+                                                        stripe={stripePromise}
+                                                        options={{
+                                                            clientSecret: paymentClientSecret,
+                                                            appearance: { theme: isDarkMode ? 'night' : 'stripe' },
+                                                        }}
+                                                    >
+                                                        <PaymentForm
+                                                            isDarkMode={isDarkMode}
+                                                            amount={paymentAmount}
+                                                            currency={paymentCurrency}
+                                                            planLabel={getPlanLabel(paymentPlan)}
+                                                            onSuccess={handlePaymentSuccess}
+                                                            onClose={() => setIsPaymentModalOpen(false)}
+                                                        />
+                                                    </Elements>
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
                                 </Dialog.Panel>
