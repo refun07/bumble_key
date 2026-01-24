@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Key;
 use App\Models\Setting;
 use App\Models\Transaction;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Stripe\PaymentIntent;
@@ -64,6 +65,17 @@ class KeyPaymentController extends Controller
 
         $key = $request->user()->keys()->findOrFail($keyId);
 
+
+        $keyAssignment = optional($key->currentAssignment)->id;
+        // Log::info('Key Payment Confirmation', [
+        //     'user_id' => $request->user()->id,
+        //     'key_id' => $key->id,
+        //     'key_assignment_id' => optional($key->currentAssignment)->id,
+        //     'payment_intent_id' => $validated['payment_intent_id'],
+        //     'package_type' => $validated['package_type'],
+        // ]);
+
+
         $secret = config('services.stripe.secret');
         if (empty($secret)) {
             return response()->json(['message' => 'Stripe is not configured.'], 500);
@@ -95,7 +107,7 @@ class KeyPaymentController extends Controller
 
         $transaction = Transaction::create([
             'user_id' => $request->user()->id,
-            'key_assignment_id' => null,
+            'key_assignment_id' => $keyAssignment,
             'amount' => $amount,
             'currency' => strtoupper($intent->currency),
             'type' => 'host_fee',
