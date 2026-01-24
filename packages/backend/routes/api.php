@@ -10,6 +10,7 @@ Route::post('/auth/login', [AuthController::class, 'login']);
 Route::post('/auth/refresh', [AuthController::class, 'refresh']);
 Route::get('/hives/public', [\App\Http\Controllers\Api\PublicHiveController::class, 'index']);
 Route::get('/pricing', [\App\Http\Controllers\Api\Admin\SettingController::class, 'pricing']);
+Route::post('/stripe/webhook', [\App\Http\Controllers\Api\KeyPaymentWebhookController::class, 'handle']);
 
 // Protected routes
 Route::middleware('auth:sanctum')->group(function () {
