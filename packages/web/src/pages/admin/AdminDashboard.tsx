@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
     CubeIcon,
     SignalIcon,
@@ -49,6 +50,7 @@ const activityData = [
 const AdminDashboard = () => {
     const [isLoading, setIsLoading] = useState(true);
     const { isDarkMode } = useTheme();
+    const navigate = useNavigate();
 
     useEffect(() => {
         const timer = setTimeout(() => setIsLoading(false), 800);
@@ -80,11 +82,15 @@ const AdminDashboard = () => {
                     <p className="text-sm lg:text-base text-secondary font-medium">Real-time system performance and management metrics.</p>
                 </div>
                 <div className="flex items-center gap-3">
-                    <Button variant="outline" className="flex-1 sm:flex-none">
+                    <Button variant="warning" className="flex-1 sm:flex-none">
                         <ArrowDownTrayIcon className="h-4 w-4 mr-2" />
                         Export Report
                     </Button>
-                    <Button variant="secondary" className="flex-1 sm:flex-none">
+                    <Button
+                        variant="secondary"
+                        className="flex-1 sm:flex-none"
+                        onClick={() => navigate('/admin/partners')}
+                    >
                         <PlusIcon className="h-4 w-4 mr-2" />
                         Add Partner
                     </Button>
