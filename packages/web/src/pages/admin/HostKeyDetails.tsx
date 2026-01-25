@@ -11,9 +11,11 @@ import {
 
 interface Transaction {
     id: number;
-    amount: number;
+    amount: string;
+    currency: string;
     status: string;
     created_at: string;
+    payment_gateway: string | null;
 }
 
 interface Key {
@@ -41,6 +43,25 @@ const HostKeyDetails = () => {
     const { id, keyId } = useParams<{ id: string; keyId: string }>();
     const [key, setKey] = useState<Key | null>(null);
     const [isLoading, setIsLoading] = useState(true);
+
+    const formatPackageType = (packageType: string) =>
+        packageType
+            .split('_')
+            .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+            .join(' ');
+
+    const statusStyles: Record<string, string> = {
+        active: 'bg-emerald-50 text-emerald-700 border-emerald-100',
+        assigned: 'bg-blue-50 text-blue-700 border-blue-100',
+        created: 'bg-amber-50 text-amber-700 border-amber-100',
+        completed: 'bg-emerald-50 text-emerald-700 border-emerald-100',
+        failed: 'bg-rose-50 text-rose-700 border-rose-100',
+        pending: 'bg-amber-50 text-amber-700 border-amber-100',
+        inactive: 'bg-gray-100 text-gray-600 border-gray-200'
+    };
+
+    const getStatusClasses = (status: string) =>
+        statusStyles[status?.toLowerCase()] || 'bg-gray-100 text-gray-600 border-gray-200';
 
     useEffect(() => {
         const fetchKeyDetails = async () => {
@@ -133,7 +154,7 @@ const HostKeyDetails = () => {
                                     Subscription
                                 </h4>
                                 <p className="text-gray-900 font-medium">
-                                    {key.package_type.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')} Package
+                                    {formatPackageType(key.package_type)} Package
                                 </p>
                             </div>
                         </div>
@@ -151,17 +172,23 @@ const HostKeyDetails = () => {
                                 key={tx.id}
                                 className="p-6 rounded-2xl border border-gray-50 bg-gray-50/30"
                             >
-                                <div className="flex justify-between items-start">
+                                <div className="flex justify-between items-start gap-4">
                                     <div>
                                         <p className="font-bold text-gray-900">
-                                            {new Date(tx.created_at).toLocaleDateString()} - {new Date(new Date(tx.created_at).setMonth(new Date(tx.created_at).getMonth() + 1)).toLocaleDateString()}
+                                            {tx.currency} {tx.amount}
                                         </p>
-                                        <p className="text-xs font-medium text-gray-500 mt-1 uppercase tracking-wider">
-                                            Payment Status <span className={`font-bold ${tx.status === 'completed' ? 'text-green-600' : 'text-red-600'}`}>
-                                                {tx.status === 'completed' ? 'PAID' : 'FAILED'}
-                                            </span>
+                                        <p className="text-xs font-medium text-gray-500 mt-1">
+                                            {new Date(tx.created_at).toLocaleDateString()}
+                                        </p>
+                                        <p className="text-xs font-medium text-gray-500 mt-1">
+                                            Payment gateway <span className="font-semibold text-gray-700">{tx.payment_gateway || 'N/A'}</span>
                                         </p>
                                     </div>
+                                    <span
+                                        className={`px-2.5 py-1 rounded-full text-[10px] font-semibold border ${getStatusClasses(tx.status)}`}
+                                    >
+                                        {tx.status}
+                                    </span>
                                 </div>
                             </div>
                         ))}

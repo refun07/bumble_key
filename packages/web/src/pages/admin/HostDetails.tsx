@@ -15,6 +15,20 @@ interface Key {
     label: string;
     package_type: string;
     status: string;
+    assignments: Assignment[];
+}
+
+interface Assignment {
+    id: number;
+    transactions: Transaction[];
+}
+
+interface Transaction {
+    id: number;
+    amount: string;
+    currency: string;
+    status: string;
+    payment_gateway: string | null;
 }
 
 interface Host {
@@ -33,12 +47,29 @@ const HostDetails = () => {
     const [host, setHost] = useState<Host | null>(null);
     const [isLoading, setIsLoading] = useState(true);
 
+    const formatPackageType = (packageType: string) =>
+        packageType
+            .split('_')
+            .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+            .join(' ');
+
+    const statusStyles: Record<string, string> = {
+        active: 'bg-emerald-50 text-emerald-700 border-emerald-100',
+        assigned: 'bg-blue-50 text-blue-700 border-blue-100',
+        created: 'bg-amber-50 text-amber-700 border-amber-100',
+        inactive: 'bg-gray-100 text-gray-600 border-gray-200'
+    };
+
+    const getStatusClasses = (status: string) =>
+        statusStyles[status?.toLowerCase()] || 'bg-gray-100 text-gray-600 border-gray-200';
+
     useEffect(() => {
         const fetchHostDetails = async () => {
             setIsLoading(true);
             try {
                 const response = await api.get(`/admin/hosts/${id}`);
                 setHost(response.data.data);
+                
             } catch (error) {
                 console.error('Failed to fetch host details', error);
             } finally {
@@ -133,12 +164,58 @@ const HostDetails = () => {
                             >
                                 <div className="flex justify-between items-center">
                                     <div>
-                                        <p className="font-bold text-gray-900 group-hover:text-bumble-yellow transition-colors">{key.label}</p>
+                                        <div className="flex flex-wrap items-center gap-2">
+                                            <p className="font-bold text-gray-900 group-hover:text-bumble-yellow transition-colors">{key.label}</p>
+                                            <span
+                                                className={`px-2.5 py-1 rounded-full text-[10px] font-semibold border ${getStatusClasses(key.status)}`}
+                                            >
+                                                {key.status}
+                                            </span>
+                                        </div>
                                         <p className="text-xs font-medium text-gray-500 mt-1">
-                                            Package <span className="text-gray-900 font-bold">{key.package_type.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}</span>
+                                            Package <span className="text-gray-900 font-bold">{formatPackageType(key.package_type)}</span>
                                         </p>
                                     </div>
                                     <ChevronRightIcon className="h-5 w-5 text-gray-300 group-hover:text-bumble-black transition-colors" />
+                                </div>
+                                <div className="mt-4 space-y-3">
+                                    {key.assignments?.length ? (
+                                        key.assignments.map((assignment) => (
+                                            <div key={assignment.id} className="space-y-2">
+                                                <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide">
+                                                    Assignment #{assignment.id}
+                                                </p>
+                                                {assignment.transactions?.length ? (
+                                                    <div className="space-y-2">
+                                                        {assignment.transactions.map((transaction) => (
+                                                            <div
+                                                                key={transaction.id}
+                                                                className="flex items-center justify-between rounded-xl border border-gray-100 bg-white/80 px-3 py-2 text-xs"
+                                                            >
+                                                                <div>
+                                                                    <p className="font-semibold text-gray-800">
+                                                                        {transaction.currency} {transaction.amount}
+                                                                    </p>
+                                                                    <p className="text-[11px] text-gray-400">
+                                                                        Payment gateway: {transaction.payment_gateway || 'N/A'}
+                                                                    </p>
+                                                                </div>
+                                                                <span
+                                                                    className={`px-2 py-1 rounded-full text-[10px] font-semibold border ${getStatusClasses(transaction.status)}`}
+                                                                >
+                                                                    {transaction.status}
+                                                                </span>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                ) : (
+                                                    <p className="text-xs text-gray-400">No transactions yet</p>
+                                                )}
+                                            </div>
+                                        ))
+                                    ) : (
+                                        <p className="text-xs text-gray-400">No assignments yet</p>
+                                    )}
                                 </div>
                             </Link>
                         ))}
