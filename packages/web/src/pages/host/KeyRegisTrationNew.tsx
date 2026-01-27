@@ -63,6 +63,8 @@ interface PricingData {
 
 type PackageType = 'pay_as_you_go' | 'monthly' | 'yearly';
 
+const PACKAGE_ORDER: PackageType[] = ['pay_as_you_go', 'monthly', 'yearly'];
+
 const PaymentForm = ({
     isDarkMode,
     amount,
@@ -459,6 +461,12 @@ const KeyRegisTrationNew = () => {
         return plan === 'monthly' ? 'Monthly' : 'Yearly';
     };
 
+    const getUpgradeOptions = (currentPlan: PackageType) => {
+        const currentIndex = PACKAGE_ORDER.indexOf(currentPlan);
+        if (currentIndex === -1) return [];
+        return PACKAGE_ORDER.slice(currentIndex + 1);
+    };
+
     const createPaymentIntent = async (keyId: number, plan: PackageType) => {
         if (!stripePromise) {
             showToast('Stripe is not configured for this app.', 'error');
@@ -699,42 +707,80 @@ const KeyRegisTrationNew = () => {
                         </div>
                     )}
 
-                    <div>
-                        <label className="block text-sm font-bold text-primary mb-2">Package</label>
-                        <div className="grid gap-3 sm:grid-cols-3">
-                            {(['pay_as_you_go', 'monthly', 'yearly'] as const).map((plan) => {
-                                const isActive = formData.package_type === plan;
-                                const showDiscount = (plan === 'monthly' && pricing.monthly_discount > 0)
-                                    || (plan === 'yearly' && pricing.yearly_discount > 0);
-                                return (
-                                    <button
-                                        key={plan}
-                                        type="button"
-                                        onClick={() => setFormData(prev => ({ ...prev, package_type: plan }))}
-                                        className={`rounded-xl border px-4 py-3 text-left transition-colors ${isActive
-                                            ? 'border-gray-900 bg-gray-50'
-                                            : 'border-gray-200 bg-white hover:border-gray-300'
-                                            } ${isDarkMode ? 'bg-zinc-800 border-zinc-700 text-white hover:border-zinc-600' : ''}`}
-                                    >
-                                        <div className="text-[10px] text-secondary uppercase tracking-wide">
-                                            {plan === 'pay_as_you_go' ? 'Per Key Exchange' : plan === 'monthly' ? 'Per Month' : 'Per Year'}
-                                        </div>
-                                        <div className={`mt-1 text-sm font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-                                            {getPlanLabel(plan)}
-                                        </div>
-                                        <div className={`mt-1 text-lg font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-                                            ${getPlanPrice(plan)}
-                                        </div>
-                                        {showDiscount && (
-                                            <div className="text-xs text-green-600 font-semibold">
-                                                {plan === 'monthly' ? pricing.monthly_discount : pricing.yearly_discount}% OFF
+                    {!isEdit && (
+                        <div>
+                            <label className="block text-sm font-bold text-primary mb-2">Package</label>
+                            <div className="grid gap-3 sm:grid-cols-3">
+                                {(['pay_as_you_go', 'monthly', 'yearly'] as const).map((plan) => {
+                                    const isActive = formData.package_type === plan;
+                                    const showDiscount = (plan === 'monthly' && pricing.monthly_discount > 0)
+                                        || (plan === 'yearly' && pricing.yearly_discount > 0);
+                                    return (
+                                        <button
+                                            key={plan}
+                                            type="button"
+                                            onClick={() => setFormData(prev => ({ ...prev, package_type: plan }))}
+                                            className={`rounded-xl border px-4 py-3 text-left transition-colors ${isActive
+                                                ? 'border-gray-900 bg-gray-50'
+                                                : 'border-gray-200 bg-white hover:border-gray-300'
+                                                } ${isDarkMode ? 'bg-zinc-800 border-zinc-700 text-white hover:border-zinc-600' : ''}`}
+                                        >
+                                            <div className="text-[10px] text-secondary uppercase tracking-wide">
+                                                {plan === 'pay_as_you_go' ? 'Per Key Exchange' : plan === 'monthly' ? 'Per Month' : 'Per Year'}
                                             </div>
-                                        )}
-                                    </button>
-                                );
-                            })}
+                                            <div className={`mt-1 text-sm font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                                                {getPlanLabel(plan)}
+                                            </div>
+                                            <div className={`mt-1 text-lg font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                                                ${getPlanPrice(plan)}
+                                            </div>
+                                            {showDiscount && (
+                                                <div className="text-xs text-green-600 font-semibold">
+                                                    {plan === 'monthly' ? pricing.monthly_discount : pricing.yearly_discount}% OFF
+                                                </div>
+                                            )}
+                                        </button>
+                                    );
+                                })}
+                            </div>
                         </div>
-                    </div>
+                    )}
+
+                    {isEdit && initialPackageType && (
+                        <div className={`rounded-2xl border p-5 ${isDarkMode ? 'border-zinc-800 bg-zinc-900' : 'border-gray-100 bg-gray-50/60'}`}>
+                            <div className="flex flex-col gap-4">
+                                <div>
+                                    <div className="text-xs font-semibold uppercase tracking-wide text-secondary">Current Package</div>
+                                    <div className={`mt-1 text-lg font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                                        {getPlanLabel(initialPackageType)} — ${getPlanPrice(initialPackageType)} {pricing.currency}
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-bold text-primary mb-2">Upgrade Package</label>
+                                    {getUpgradeOptions(initialPackageType).length === 0 ? (
+                                        <p className="text-xs text-secondary">
+                                            Your package is already at the highest tier.
+                                        </p>
+                                    ) : (
+                                        <select
+                                            className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-bumble-yellow transition-all text-sm ${isDarkMode ? 'bg-zinc-800 border-zinc-700 text-white focus:bg-zinc-900' : 'bg-white border-gray-200'}`}
+                                            value={formData.package_type}
+                                            onChange={(e) => setFormData(prev => ({ ...prev, package_type: e.target.value }))}
+                                        >
+                                            <option value={initialPackageType}>
+                                                Keep {getPlanLabel(initialPackageType)}
+                                            </option>
+                                            {getUpgradeOptions(initialPackageType).map((plan) => (
+                                                <option key={plan} value={plan}>
+                                                    Upgrade to {getPlanLabel(plan)} — ${getPlanPrice(plan)}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    )}
 
                     <Input
                         label="Key Name"
